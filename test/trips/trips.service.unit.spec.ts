@@ -33,6 +33,8 @@ describe('TripsService Unit Tests', () => {
     isPublic: false,
     shareToken: 'test-token-123',
     participants: [],
+    luggage: [],
+    items: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     generateShareToken: jest.fn(),
