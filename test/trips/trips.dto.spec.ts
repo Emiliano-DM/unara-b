@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { validate } from 'class-validator';
 import { CreateTripDto } from '../../src/trips/dto/create-trip.dto';
 import { UpdateTripDto } from '../../src/trips/dto/update-trip.dto';
