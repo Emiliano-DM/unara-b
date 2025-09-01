@@ -21,7 +21,9 @@ import { TripsModule } from './trips/trips.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
-      synchronize: true, // TODO: Esto se tiene que quitar en producción
+      synchronize: process.env.NODE_ENV !== 'production',
+      migrationsRun: process.env.NODE_ENV === 'production',
+      migrations: ['dist/database/migrations/*.js'],
     }),
 
     LuggageModule,
