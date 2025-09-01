@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { ItemsModule } from './items/items.module';
 import { LuggageCategoriesModule } from './luggage-categories/luggage-categories.module';
 import { ItemCategoriesModule } from './item-categories/item-categories.module';
+import { TripsModule } from './trips/trips.module';
 
 @Module({
   imports: [
@@ -33,7 +34,9 @@ import { ItemCategoriesModule } from './item-categories/item-categories.module';
 
     LuggageCategoriesModule,
 
-    ItemCategoriesModule
+    ItemCategoriesModule,
+
+    TripsModule
   ],
 })
 export class AppModule {}
