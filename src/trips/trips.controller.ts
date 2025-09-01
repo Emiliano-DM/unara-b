@@ -87,17 +87,17 @@ export class TripsController {
     return this.tripsService.leaveTrip(tripId, mockUserId);
   }
 
-  @Patch(':id/participants/:participantId')
+  @Patch(':id/participants/:userId/role')
   updateParticipantRole(
     @Param('id', ParseUUIDPipe) tripId: string,
-    @Param('participantId', ParseUUIDPipe) participantId: string,
+    @Param('userId', ParseUUIDPipe) participantUserId: string,
     @Body() updateParticipantRoleDto: UpdateParticipantRoleDto,
   ) {
     // TODO: Get user ID from authentication guard
     const mockUserId = 'user-uuid-from-auth';
     return this.tripsService.updateParticipantRole(
       tripId,
-      participantId,
+      participantUserId,
       updateParticipantRoleDto,
       mockUserId,
     );
