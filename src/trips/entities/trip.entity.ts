@@ -11,6 +11,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { TripParticipant } from './trip-participant.entity';
+import { Luggage } from '../../luggage/entities/luggage.entity';
+import { Item } from '../../items/entities/item.entity';
 import { randomBytes } from 'crypto';
 
 @Entity()
@@ -33,6 +35,7 @@ export class Trip {
   @Column({ type: 'date', nullable: true })
   endDate?: Date;
 
+  @Index()
   @Column({ 
     type: 'varchar', 
     length: 50, 
@@ -40,9 +43,11 @@ export class Trip {
   })
   status: string;
 
+  @Index()
   @ManyToOne(() => User, { nullable: false, eager: true })
   owner: User;
 
+  @Index()
   @Column({ type: 'boolean', default: false })
   isPublic: boolean;
 
@@ -54,6 +59,12 @@ export class Trip {
     cascade: true,
   })
   participants: TripParticipant[];
+
+  @OneToMany(() => Luggage, luggage => luggage.trip)
+  luggage: Luggage[];
+
+  @OneToMany(() => Item, item => item.trip)
+  items: Item[];
 
   @CreateDateColumn()
   createdAt: Date;

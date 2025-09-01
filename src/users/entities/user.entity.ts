@@ -1,4 +1,6 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Luggage } from "../../luggage/entities/luggage.entity";
+import { Item } from "../../items/entities/item.entity";
 
 @Entity()
 export class User {
@@ -19,6 +21,12 @@ export class User {
 
     @Column({ type: 'text', nullable: true })
     profile_picture?: string
+
+    @OneToMany(() => Luggage, luggage => luggage.user)
+    luggage: Luggage[];
+
+    @OneToMany(() => Item, item => item.createdBy)
+    createdItems: Item[];
 
     @CreateDateColumn()
     createdAt: Date;

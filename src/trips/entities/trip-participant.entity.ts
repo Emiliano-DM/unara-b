@@ -34,6 +34,7 @@ export class TripParticipant {
   })
   role: string; // owner, admin, participant
 
+  @Index()
   @Column({ 
     type: 'varchar', 
     length: 50, 
