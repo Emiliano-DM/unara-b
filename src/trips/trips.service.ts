@@ -189,7 +189,7 @@ export class TripsService {
       where: { trip: { id: tripId }, user: { id: inviteDto.userId } }
     });
 
-    if (existingParticipant) {
+    if (existingParticipant && existingParticipant.status !== 'left') {
       throw new BadRequestException('User is already a participant');
     }
 
@@ -213,49 +213,92 @@ export class TripsService {
   }
 
   async joinTrip(tripId: string, userId: string): Promise<TripParticipant> {
-    const participant = await this.participantRepository.findOne({
-      where: { trip: { id: tripId }, user: { id: userId }, status: 'invited' },
+    // First, get the trip to check if it's public or if user has an invitation
+    const trip = await this.tripRepository.findOne({
+      where: { id: tripId },
+      relations: ['owner', 'participants', 'participants.user'],
+    });
+
+    if (!trip) {
+      throw new NotFoundException('Trip not found');
+    }
+
+    // Check if user exists
+    const user = await this.userRepository.findOne({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if user is already a participant
+    const existingParticipant = await this.participantRepository.findOne({
+      where: { trip: { id: tripId }, user: { id: userId } },
       relations: ['trip', 'user'],
     });
 
-    if (!participant) {
-      throw new NotFoundException('Invitation not found or already processed');
+    if (existingParticipant) {
+      if (existingParticipant.status === 'joined') {
+        throw new BadRequestException('User is already a participant');
+      } else if (existingParticipant.status === 'invited') {
+        // User was invited, now joining
+        existingParticipant.status = 'joined';
+        existingParticipant.joinedAt = new Date();
+        return this.participantRepository.save(existingParticipant);
+      }
     }
 
-    participant.status = 'joined';
-    participant.joinedAt = new Date();
+    // If trip is public, allow anyone to join
+    if (trip.isPublic) {
+      const newParticipant = this.participantRepository.create({
+        trip,
+        user,
+        role: 'participant',
+        status: 'joined',
+        joinedAt: new Date(),
+      });
+      return this.participantRepository.save(newParticipant);
+    }
 
-    return this.participantRepository.save(participant);
+    // If trip is private and no invitation found, deny access
+    throw new ForbiddenException('Cannot join private trip without invitation');
   }
 
   async leaveTrip(tripId: string, userId: string): Promise<void> {
+    // First check if user is the trip owner
+    const trip = await this.tripRepository.findOne({
+      where: { id: tripId },
+      relations: ['owner'],
+    });
+
+    if (!trip) {
+      throw new NotFoundException('Trip not found');
+    }
+
+    if (trip.owner.id === userId) {
+      throw new ForbiddenException('Trip owner cannot leave the trip. Transfer ownership first.');
+    }
+
     const participant = await this.participantRepository.findOne({
-      where: { trip: { id: tripId }, user: { id: userId }, status: 'joined' },
-      relations: ['trip'],
+      where: { trip: { id: tripId }, user: { id: userId } },
+      relations: ['trip', 'user'],
     });
 
     if (!participant) {
       throw new NotFoundException('Participation not found');
     }
 
-    // Owner cannot leave their own trip
-    if (participant.role === 'owner') {
-      throw new ForbiddenException('Trip owner cannot leave the trip');
-    }
-
     // Check leave policy - if trip hasn't started, remove contributions
-    const trip = participant.trip;
     if (trip.startDate && new Date() < trip.startDate) {
       // TODO: Remove user's luggage and items when implementing that logic
     }
 
-    participant.status = 'left';
-    participant.leftAt = new Date();
-
-    await this.participantRepository.save(participant);
+    // Remove the participant completely
+    await this.participantRepository.remove(participant);
   }
 
-  async updateParticipantRole(tripId: string, participantId: string, updateDto: UpdateParticipantRoleDto, ownerId: string): Promise<TripParticipant> {
+  async updateParticipantRole(tripId: string, participantUserId: string, updateDto: UpdateParticipantRoleDto, ownerId: string): Promise<TripParticipant> {
     const trip = await this.findOne(tripId, ownerId);
 
     // Only owner can update roles
@@ -264,8 +307,8 @@ export class TripsService {
     }
 
     const participant = await this.participantRepository.findOne({
-      where: { id: participantId, trip: { id: tripId } },
-      relations: ['user'],
+      where: { user: { id: participantUserId }, trip: { id: tripId } },
+      relations: ['user', 'trip'],
     });
 
     if (!participant) {
