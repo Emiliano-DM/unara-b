@@ -8,6 +8,8 @@ import { LuggageItemsController } from './controllers/luggage-items.controller';
 import { LuggageItemsService } from './services/luggage-items.service';
 import { LuggageItem } from './entities/luggage-item.entity';
 import { ItemsModule } from 'src/items/items.module';
+import { User } from '../users/entities/user.entity';
+import { TripsModule } from '../trips/trips.module';
 
 @Module({
   controllers: [
@@ -21,10 +23,12 @@ import { ItemsModule } from 'src/items/items.module';
   imports: [
     TypeOrmModule.forFeature([ 
       Luggage,
-      LuggageItem
+      LuggageItem,
+      User
     ]),
     LuggageCategoriesModule,
     ItemsModule,
+    TripsModule,
   ]
 })
 export class LuggageModule {}
