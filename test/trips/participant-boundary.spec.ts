@@ -160,6 +160,9 @@ describe('Participant Boundary Condition Tests', () => {
         isPublic: false,
         shareToken: 'test-token',
         participants: [],
+        currency: 'USD',
+        luggage: [],
+        items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
         generateShareToken: jest.fn() 
@@ -306,6 +309,9 @@ describe('Participant Boundary Condition Tests', () => {
         isPublic: false,
         shareToken: 'test-token',
         participants: [],
+        currency: 'USD',
+        luggage: [],
+        items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
         generateShareToken: jest.fn() 
@@ -457,6 +463,9 @@ describe('Participant Boundary Condition Tests', () => {
         isPublic: false,
         shareToken: 'test-token',
         participants: [],
+        currency: 'USD',
+        luggage: [],
+        items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
         generateShareToken: jest.fn() 
@@ -481,6 +490,9 @@ describe('Participant Boundary Condition Tests', () => {
         isPublic: false,
         shareToken: 'test-token',
         participants: [],
+        currency: 'USD',
+        luggage: [],
+        items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
         generateShareToken: jest.fn() 

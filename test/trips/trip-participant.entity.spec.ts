@@ -4,6 +4,8 @@ import { DataSource, Repository } from 'typeorm';
 import { Trip } from '../../src/trips/entities/trip.entity';
 import { TripParticipant } from '../../src/trips/entities/trip-participant.entity';
 import { User } from '../../src/users/entities/user.entity';
+import { ParticipantRole } from '../../src/common/enums/participant-role.enum';
+import { ParticipantStatus } from '../../src/common/enums/participant-status.enum';
 
 describe('TripParticipant Entity', () => {
   let module: TestingModule;
@@ -73,15 +75,15 @@ describe('TripParticipant Entity', () => {
       trip: testTrip,
       user: testParticipant,
       invitedBy: testOwner,
-      role: 'participant',
-      status: 'invited',
+      role: ParticipantRole.PARTICIPANT,
+      status: ParticipantStatus.INVITED,
     });
 
     const savedParticipant = await participantRepository.save(participant);
 
     expect(savedParticipant.id).toBeDefined();
-    expect(savedParticipant.role).toBe('participant');
-    expect(savedParticipant.status).toBe('invited');
+    expect(savedParticipant.role).toBe(ParticipantRole.PARTICIPANT);
+    expect(savedParticipant.status).toBe(ParticipantStatus.INVITED);
   });
 
   it('should have default role as participant', async () => {
@@ -150,18 +152,18 @@ describe('TripParticipant Entity', () => {
       trip: testTrip,
       user: testParticipant,
       invitedBy: testOwner,
-      status: 'invited',
+      status: ParticipantStatus.INVITED,
     });
 
     const savedParticipant = await participantRepository.save(participant);
     
     // Update status to joined
-    savedParticipant.status = 'joined';
+    savedParticipant.status = ParticipantStatus.JOINED;
     savedParticipant.joinedAt = new Date();
     
     const updatedParticipant = await participantRepository.save(savedParticipant);
 
-    expect(updatedParticipant.status).toBe('joined');
+    expect(updatedParticipant.status).toBe(ParticipantStatus.JOINED);
     expect(updatedParticipant.joinedAt).toBeDefined();
   });
 });

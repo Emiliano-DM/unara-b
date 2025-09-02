@@ -4,10 +4,21 @@ import { TripsService } from '../../src/trips/trips.service';
 import { CreateTripDto } from '../../src/trips/dto/create-trip.dto';
 import { UpdateTripDto } from '../../src/trips/dto/update-trip.dto';
 import { FilterTripDto } from '../../src/trips/dto/filter-trip.dto';
+import { User } from '../../src/users/entities/user.entity';
+import { ItemsService } from '../../src/items/items.service';
+import { LuggageService } from '../../src/luggage/services/luggage.service';
 
 describe('TripsController Unit Tests', () => {
   let controller: TripsController;
   let service: jest.Mocked<TripsService>;
+
+  const mockUser: User = {
+    id: 'user-uuid-from-auth',
+    email: 'test@example.com',
+    username: 'testuser',
+    firstName: 'Test',
+    lastName: 'User',
+  } as User;
 
   const mockTrip = {
     id: 'trip-1',
@@ -30,12 +41,30 @@ describe('TripsController Unit Tests', () => {
       updateParticipantRole: jest.fn(),
     };
 
+    const mockItemsService = {
+      createForTrip: jest.fn(),
+      findByTrip: jest.fn(),
+    };
+
+    const mockLuggageService = {
+      createForTrip: jest.fn(),
+      findByTrip: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TripsController],
       providers: [
         {
           provide: TripsService,
           useValue: mockService,
+        },
+        {
+          provide: ItemsService,
+          useValue: mockItemsService,
+        },
+        {
+          provide: LuggageService,
+          useValue: mockLuggageService,
         },
       ],
     }).compile();
@@ -53,9 +82,9 @@ describe('TripsController Unit Tests', () => {
 
       service.create.mockResolvedValue(mockTrip as any);
 
-      const result = await controller.create(createTripDto);
+      const result = await controller.create(createTripDto, mockUser);
 
-      expect(service.create).toHaveBeenCalledWith(createTripDto, 'user-uuid-from-auth');
+      expect(service.create).toHaveBeenCalledWith(createTripDto, mockUser.id);
       expect(result).toEqual(mockTrip);
     });
   });
@@ -67,9 +96,9 @@ describe('TripsController Unit Tests', () => {
 
       service.findAll.mockResolvedValue(expectedTrips as any);
 
-      const result = await controller.findAll(filterDto);
+      const result = await controller.findAll(filterDto, mockUser);
 
-      expect(service.findAll).toHaveBeenCalledWith('user-uuid-from-auth', filterDto);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser.id, filterDto);
       expect(result).toEqual(expectedTrips);
     });
   });
@@ -78,9 +107,9 @@ describe('TripsController Unit Tests', () => {
     it('should return a single trip', async () => {
       service.findOne.mockResolvedValue(mockTrip as any);
 
-      const result = await controller.findOne('trip-1');
+      const result = await controller.findOne('trip-1', mockUser);
 
-      expect(service.findOne).toHaveBeenCalledWith('trip-1', 'user-uuid-from-auth');
+      expect(service.findOne).toHaveBeenCalledWith('trip-1', mockUser.id);
       expect(result).toEqual(mockTrip);
     });
   });
@@ -103,9 +132,9 @@ describe('TripsController Unit Tests', () => {
 
       service.update.mockResolvedValue(updatedTrip as any);
 
-      const result = await controller.update('trip-1', updateDto);
+      const result = await controller.update('trip-1', updateDto, mockUser);
 
-      expect(service.update).toHaveBeenCalledWith('trip-1', updateDto, 'user-uuid-from-auth');
+      expect(service.update).toHaveBeenCalledWith('trip-1', updateDto, mockUser.id);
       expect(result).toEqual(updatedTrip);
     });
   });
@@ -114,9 +143,9 @@ describe('TripsController Unit Tests', () => {
     it('should remove a trip', async () => {
       service.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove('trip-1');
+      const result = await controller.remove('trip-1', mockUser);
 
-      expect(service.remove).toHaveBeenCalledWith('trip-1', 'user-uuid-from-auth');
+      expect(service.remove).toHaveBeenCalledWith('trip-1', mockUser.id);
       expect(result).toBeUndefined();
     });
   });
@@ -128,9 +157,9 @@ describe('TripsController Unit Tests', () => {
 
       service.inviteParticipant.mockResolvedValue(mockParticipant as any);
 
-      const result = await controller.inviteParticipant('trip-1', inviteDto);
+      const result = await controller.inviteParticipant('trip-1', inviteDto, mockUser);
 
-      expect(service.inviteParticipant).toHaveBeenCalledWith('trip-1', inviteDto, 'user-uuid-from-auth');
+      expect(service.inviteParticipant).toHaveBeenCalledWith('trip-1', inviteDto, mockUser.id);
       expect(result).toEqual(mockParticipant);
     });
 
@@ -139,18 +168,18 @@ describe('TripsController Unit Tests', () => {
 
       service.joinTrip.mockResolvedValue(mockParticipant as any);
 
-      const result = await controller.joinTrip('trip-1');
+      const result = await controller.joinTrip('trip-1', mockUser);
 
-      expect(service.joinTrip).toHaveBeenCalledWith('trip-1', 'user-uuid-from-auth');
+      expect(service.joinTrip).toHaveBeenCalledWith('trip-1', mockUser.id);
       expect(result).toEqual(mockParticipant);
     });
 
     it('should allow leaving trip', async () => {
       service.leaveTrip.mockResolvedValue(undefined);
 
-      const result = await controller.leaveTrip('trip-1');
+      const result = await controller.leaveTrip('trip-1', mockUser);
 
-      expect(service.leaveTrip).toHaveBeenCalledWith('trip-1', 'user-uuid-from-auth');
+      expect(service.leaveTrip).toHaveBeenCalledWith('trip-1', mockUser.id);
       expect(result).toBeUndefined();
     });
 
@@ -160,9 +189,9 @@ describe('TripsController Unit Tests', () => {
 
       service.updateParticipantRole.mockResolvedValue(mockParticipant as any);
 
-      const result = await controller.updateParticipantRole('trip-1', 'participant-1', updateRoleDto);
+      const result = await controller.updateParticipantRole('trip-1', 'participant-1', updateRoleDto, mockUser);
 
-      expect(service.updateParticipantRole).toHaveBeenCalledWith('trip-1', 'participant-1', updateRoleDto, 'user-uuid-from-auth');
+      expect(service.updateParticipantRole).toHaveBeenCalledWith('trip-1', 'participant-1', updateRoleDto, mockUser.id);
       expect(result).toEqual(mockParticipant);
     });
   });

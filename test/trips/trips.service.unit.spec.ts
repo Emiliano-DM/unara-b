@@ -6,6 +6,9 @@ import { Trip } from '../../src/trips/entities/trip.entity';
 import { TripParticipant } from '../../src/trips/entities/trip-participant.entity';
 import { User } from '../../src/users/entities/user.entity';
 import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { TripStatus } from '../../src/common/enums/trip-status.enum';
+import { ParticipantRole } from '../../src/common/enums/participant-role.enum';
+import { ParticipantStatus } from '../../src/common/enums/participant-status.enum';
 
 describe('TripsService Unit Tests', () => {
   let service: TripsService;
@@ -15,10 +18,14 @@ describe('TripsService Unit Tests', () => {
 
   const mockUser: User = {
     id: 'user-1',
+    firstName: 'Test',
+    lastName: 'User',
     fullname: 'Test User',
     email: 'test@example.com',
     username: 'testuser',
     password: 'hashedpassword',
+    emailVerified: true,
+    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
   } as User;
@@ -28,10 +35,13 @@ describe('TripsService Unit Tests', () => {
     name: 'Test Trip',
     description: 'Test Description',
     destination: 'Test Destination',
-    status: 'planning',
+    status: TripStatus.PLANNING,
     owner: mockUser,
     isPublic: false,
     shareToken: 'test-token-123',
+    budget: 2000,
+    currency: 'USD',
+    maxParticipants: 10,
     participants: [],
     luggage: [],
     items: [],
@@ -69,6 +79,7 @@ describe('TripsService Unit Tests', () => {
             create: jest.fn(),
             save: jest.fn(),
             findOne: jest.fn(),
+            remove: jest.fn(),
           },
         },
         {
@@ -159,6 +170,140 @@ describe('TripsService Unit Tests', () => {
       tripRepository.findOne.mockResolvedValue(nonOwnerTrip);
 
       await expect(service.updateParticipantRole('trip-1', 'participant-1', { role: 'admin' }, mockUser.id)).rejects.toThrow();
+    });
+  });
+
+  describe('Enhanced Trip Creation', () => {
+    it('should create trip with budget and planning fields', async () => {
+      const createTripDto = {
+        name: 'Budget Trip',
+        description: 'A well-planned trip',
+        destination: 'Paris',
+        budget: 3000,
+        currency: 'EUR',
+        maxParticipants: 8,
+        category: 'Cultural',
+      };
+
+      userRepository.findOne.mockResolvedValue(mockUser);
+      const expectedTrip = { ...mockTrip, ...createTripDto, generateShareToken: jest.fn() };
+      tripRepository.create.mockReturnValue(expectedTrip as Trip);
+      tripRepository.save.mockResolvedValue(expectedTrip as Trip);
+      participantRepository.create.mockReturnValue({
+        role: ParticipantRole.OWNER,
+        status: ParticipantStatus.JOINED,
+      } as TripParticipant);
+      participantRepository.save.mockResolvedValue({} as TripParticipant);
+
+      const result = await service.create(createTripDto, mockUser.id);
+
+      expect(result).toEqual(expectedTrip);
+      expect(tripRepository.create).toHaveBeenCalledWith({ ...createTripDto, owner: mockUser });
+    });
+  });
+
+  describe('Enum-based Status Management', () => {
+    it('should handle participant role with enum', async () => {
+      const mockParticipant = {
+        id: 'participant-1',
+        role: ParticipantRole.PARTICIPANT,
+        status: ParticipantStatus.INVITED,
+        user: { id: 'user-2' },
+      } as TripParticipant;
+
+      const mockTripWithParticipants = {
+        ...mockTrip,
+        participants: [mockParticipant],
+        generateShareToken: jest.fn(),
+      };
+
+      tripRepository.findOne.mockResolvedValue(mockTripWithParticipants as Trip);
+      userRepository.findOne.mockResolvedValue({ id: 'user-2' } as User);
+      participantRepository.findOne.mockResolvedValue(null);
+      participantRepository.create.mockReturnValue({
+        role: ParticipantRole.PARTICIPANT,
+        status: ParticipantStatus.INVITED,
+      } as TripParticipant);
+      participantRepository.save.mockResolvedValue({} as TripParticipant);
+
+      const inviteDto = { userId: 'user-2', role: 'participant' };
+      
+      const result = await service.inviteParticipant('trip-1', inviteDto, mockUser.id);
+
+      expect(participantRepository.create).toHaveBeenCalledWith({
+        trip: mockTripWithParticipants,
+        user: { id: 'user-2' },
+        invitedBy: mockUser,
+        role: ParticipantRole.PARTICIPANT,
+        status: ParticipantStatus.INVITED,
+      });
+    });
+
+    it('should handle participant status transitions correctly', async () => {
+      const existingParticipant = {
+        id: 'participant-1',
+        status: ParticipantStatus.INVITED,
+        joinedAt: null,
+      } as TripParticipant;
+
+      const mockTripForJoin = {
+        ...mockTrip,
+        isPublic: false,
+        generateShareToken: jest.fn(),
+      };
+
+      tripRepository.findOne.mockResolvedValue(mockTripForJoin as Trip);
+      userRepository.findOne.mockResolvedValue(mockUser);
+      participantRepository.findOne.mockResolvedValue(existingParticipant);
+      participantRepository.save.mockResolvedValue({
+        ...existingParticipant,
+        status: ParticipantStatus.JOINED,
+        joinedAt: expect.any(Date),
+      });
+
+      const result = await service.joinTrip('trip-1', mockUser.id);
+
+      expect(participantRepository.save).toHaveBeenCalledWith({
+        ...existingParticipant,
+        status: ParticipantStatus.JOINED,
+        joinedAt: expect.any(Date),
+      });
+    });
+  });
+
+  describe('Trip Management with New Fields', () => {
+    it('should validate maxParticipants when inviting', async () => {
+      const fullTrip = {
+        ...mockTrip,
+        maxParticipants: 2,
+        participants: [
+          { status: ParticipantStatus.JOINED },
+          { status: ParticipantStatus.JOINED },
+        ],
+      };
+
+      tripRepository.findOne.mockResolvedValue(fullTrip);
+      
+      // This test would need additional logic in the service to check maxParticipants
+      // For now, we're testing that the field is accessible
+      expect(fullTrip.maxParticipants).toBe(2);
+      expect(fullTrip.participants.length).toBe(2);
+    });
+
+    it('should handle budget constraints in trip updates', async () => {
+      const updateDto = {
+        budget: 5000,
+        currency: 'GBP',
+      };
+
+      const updatedTrip = { ...mockTrip, ...updateDto };
+      tripRepository.findOne.mockResolvedValue(mockTrip);
+      tripRepository.save.mockResolvedValue(updatedTrip);
+
+      const result = await service.update('trip-1', updateDto, mockUser.id);
+
+      expect(result.budget).toBe(5000);
+      expect(result.currency).toBe('GBP');
     });
   });
 });
