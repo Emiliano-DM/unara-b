@@ -12,20 +12,37 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-    })
+    }),
   );
 
   // Swagger/OpenAPI setup
   const config = new DocumentBuilder()
     .setTitle('Unara Travel Planning API')
-    .setDescription('A comprehensive travel planning application API that allows users to create trips, manage luggage, organize items, and collaborate with trip participants.')
+    .setDescription(
+      'A comprehensive travel planning application API that allows users to create trips, manage luggage, organize items, and collaborate with trip participants.',
+    )
     .setVersion('1.0')
-    .addTag('auth', 'Authentication endpoints for user registration, login, and profile management')
-    .addTag('trips', 'Trip management endpoints for creating, updating, and managing travel trips')
-    .addTag('luggage', 'Luggage management endpoints for organizing travel luggage')
-    .addTag('items', 'Item management endpoints for planning and tracking travel items')
+    .addTag(
+      'auth',
+      'Authentication endpoints for user registration, login, and profile management',
+    )
+    .addTag(
+      'trips',
+      'Trip management endpoints for creating, updating, and managing travel trips',
+    )
+    .addTag(
+      'luggage',
+      'Luggage management endpoints for organizing travel luggage',
+    )
+    .addTag(
+      'items',
+      'Item management endpoints for planning and tracking travel items',
+    )
     .addTag('users', 'User management endpoints for profile and user discovery')
-    .addTag('categories', 'Category management for organizing luggage and items')
+    .addTag(
+      'categories',
+      'Category management for organizing luggage and items',
+    )
     .addBearerAuth(
       {
         type: 'http',
@@ -35,7 +52,7 @@ async function bootstrap() {
         description: 'Enter JWT token',
         in: 'header',
       },
-      'JWT-auth'
+      'JWT-auth',
     )
     .build();
 

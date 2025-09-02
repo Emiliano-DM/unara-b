@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Luggage } from '../entities/luggage.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,9 +13,8 @@ import { LuggageItem } from '../entities/luggage-item.entity';
 
 @Injectable()
 export class LuggageItemsService {
-
   private readonly logger = new Logger('LuggageItemsService');
-  
+
   constructor(
     @InjectRepository(Luggage)
     private readonly luggageRepository: Repository<Luggage>,
@@ -20,8 +24,14 @@ export class LuggageItemsService {
     private readonly luggageItemRepository: Repository<LuggageItem>,
   ) {}
 
-  async upsert(luggageId: string, itemId: string, dto: UpsertLuggageItemDto): Promise<LuggageItem> {
-    const luggage = await this.luggageRepository.findOne({ where: { id: luggageId } });
+  async upsert(
+    luggageId: string,
+    itemId: string,
+    dto: UpsertLuggageItemDto,
+  ): Promise<LuggageItem> {
+    const luggage = await this.luggageRepository.findOne({
+      where: { id: luggageId },
+    });
     if (!luggage) {
       throw new NotFoundException(`Luggage with id ${luggageId} not found`);
     }
@@ -33,31 +43,36 @@ export class LuggageItemsService {
 
     try {
       const updateResult = await this.luggageItemRepository
-                                     .createQueryBuilder()
-                                     .update(LuggageItem)
-                                     .set({ quantity: dto.quantity })
-                                     .where('luggageId = :luggageId AND itemId = :itemId', { luggageId, itemId })
-                                     .execute();
-                                     
+        .createQueryBuilder()
+        .update(LuggageItem)
+        .set({ quantity: dto.quantity })
+        .where('luggageId = :luggageId AND itemId = :itemId', {
+          luggageId,
+          itemId,
+        })
+        .execute();
+
       if (updateResult.affected === 0) {
         await this.luggageItemRepository
-                  .createQueryBuilder()
-                  .insert()
-                  .into(LuggageItem)
-                  .values({
-                    luggage: { id: luggageId },
-                    item: { id: itemId },
-                    quantity: dto.quantity,
-                  })
-                  .execute();
+          .createQueryBuilder()
+          .insert()
+          .into(LuggageItem)
+          .values({
+            luggage: { id: luggageId },
+            item: { id: itemId },
+            quantity: dto.quantity,
+          })
+          .execute();
       }
-      
-      return await this.luggageItemRepository
-                       .createQueryBuilder('li')
-                       .leftJoinAndSelect('li.item', 'item')
-                       .where('li.luggageId = :luggageId AND li.itemId = :itemId', { luggageId, itemId })
-                       .getOne();
 
+      return await this.luggageItemRepository
+        .createQueryBuilder('li')
+        .leftJoinAndSelect('li.item', 'item')
+        .where('li.luggageId = :luggageId AND li.itemId = :itemId', {
+          luggageId,
+          itemId,
+        })
+        .getOne();
     } catch (error) {
       this.handleExceptions(error);
     }
@@ -65,24 +80,26 @@ export class LuggageItemsService {
 
   async findAll(luggageId: string): Promise<LuggageItem[]> {
     const luggageItems = await this.luggageItemRepository
-                                   .createQueryBuilder('luggageItem')
-                                   .leftJoinAndSelect('luggageItem.item', 'item')
-                                   .where('luggageItem.luggageId = :luggageId', { luggageId })
-                                   .getMany();
+      .createQueryBuilder('luggageItem')
+      .leftJoinAndSelect('luggageItem.item', 'item')
+      .where('luggageItem.luggageId = :luggageId', { luggageId })
+      .getMany();
 
     return luggageItems;
   }
 
   async findOne(luggageId: string, itemId: string): Promise<LuggageItem> {
     const luggageItem = await this.luggageItemRepository
-                                  .createQueryBuilder('luggageItem')
-                                  .leftJoinAndSelect('luggageItem.item', 'item')
-                                  .where('luggageItem.luggageId = :luggageId', { luggageId })
-                                  .andWhere('luggageItem.itemId = :itemId', { itemId })
-                                  .getOne();
-    
+      .createQueryBuilder('luggageItem')
+      .leftJoinAndSelect('luggageItem.item', 'item')
+      .where('luggageItem.luggageId = :luggageId', { luggageId })
+      .andWhere('luggageItem.itemId = :itemId', { itemId })
+      .getOne();
+
     if (!luggageItem) {
-      throw new NotFoundException(`Item with id ${itemId} not found in luggage ${luggageId}`);
+      throw new NotFoundException(
+        `Item with id ${itemId} not found in luggage ${luggageId}`,
+      );
     }
 
     return luggageItem;
@@ -90,14 +107,19 @@ export class LuggageItemsService {
 
   async remove(luggageId: string, itemId: string): Promise<void> {
     const result = await this.luggageItemRepository
-                             .createQueryBuilder()
-                             .delete()
-                             .from(LuggageItem)
-                             .where('luggageId = :luggageId AND itemId = :itemId', { luggageId, itemId })
-                             .execute();
-    
+      .createQueryBuilder()
+      .delete()
+      .from(LuggageItem)
+      .where('luggageId = :luggageId AND itemId = :itemId', {
+        luggageId,
+        itemId,
+      })
+      .execute();
+
     if (result.affected === 0) {
-      throw new NotFoundException(`Item with id ${itemId} not found in luggage ${luggageId}`);
+      throw new NotFoundException(
+        `Item with id ${itemId} not found in luggage ${luggageId}`,
+      );
     }
   }
 
@@ -107,6 +129,8 @@ export class LuggageItemsService {
 
     this.logger.error(error);
 
-    throw new InternalServerErrorException('Unexpected error, check server logs');
+    throw new InternalServerErrorException(
+      'Unexpected error, check server logs',
+    );
   }
 }

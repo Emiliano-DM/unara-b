@@ -237,7 +237,7 @@ describe('User Authentication and Profile Management', () => {
     it('should set password reset token', async () => {
       const resetToken = 'secure-reset-token-456';
       const expiresAt = new Date(Date.now() + 3600000);
-      
+
       const updateDto = {
         passwordResetToken: resetToken,
         passwordResetExpiresAt: expiresAt,
@@ -323,7 +323,7 @@ describe('User Authentication and Profile Management', () => {
 
       expect(queryBuilder.andWhere).toHaveBeenCalledWith(
         'user.email ILIKE :email',
-        { email: '%john%' }
+        { email: '%john%' },
       );
       expect(result).toEqual(mockUsers);
     });
@@ -345,7 +345,7 @@ describe('User Authentication and Profile Management', () => {
 
       expect(queryBuilder.andWhere).toHaveBeenCalledWith(
         'user.username ILIKE :username',
-        { username: '%doe%' }
+        { username: '%doe%' },
       );
       expect(result).toEqual(mockUsers);
     });
@@ -353,12 +353,13 @@ describe('User Authentication and Profile Management', () => {
 
   describe('Profile Completeness', () => {
     it('should identify complete user profiles', () => {
-      const isComplete = mockActiveUser.firstName &&
-                        mockActiveUser.lastName &&
-                        mockActiveUser.email &&
-                        mockActiveUser.phoneNumber &&
-                        mockActiveUser.country &&
-                        mockActiveUser.emailVerified;
+      const isComplete =
+        mockActiveUser.firstName &&
+        mockActiveUser.lastName &&
+        mockActiveUser.email &&
+        mockActiveUser.phoneNumber &&
+        mockActiveUser.country &&
+        mockActiveUser.emailVerified;
 
       expect(isComplete).toBe(true);
     });
@@ -370,12 +371,13 @@ describe('User Authentication and Profile Management', () => {
         country: null,
       };
 
-      const isComplete = incompleteUser.firstName &&
-                        incompleteUser.lastName &&
-                        incompleteUser.email &&
-                        incompleteUser.phoneNumber &&
-                        incompleteUser.country &&
-                        incompleteUser.emailVerified;
+      const isComplete =
+        incompleteUser.firstName &&
+        incompleteUser.lastName &&
+        incompleteUser.email &&
+        incompleteUser.phoneNumber &&
+        incompleteUser.country &&
+        incompleteUser.emailVerified;
 
       expect(isComplete).toBeFalsy();
     });
@@ -386,7 +388,7 @@ describe('User Authentication and Profile Management', () => {
       userRepository.findOneBy.mockResolvedValue(null);
 
       await expect(service.findOne('non-existent-id')).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
 
@@ -394,7 +396,7 @@ describe('User Authentication and Profile Management', () => {
       userRepository.preload.mockResolvedValue(null);
 
       await expect(
-        service.update('non-existent-id', { firstName: 'Test' })
+        service.update('non-existent-id', { firstName: 'Test' }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -402,7 +404,7 @@ describe('User Authentication and Profile Management', () => {
       userRepository.findOneBy.mockResolvedValue(null);
 
       await expect(service.remove('non-existent-id')).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
   });
@@ -416,7 +418,7 @@ describe('User Authentication and Profile Management', () => {
         'UTC',
       ];
 
-      validTimezones.forEach(timezone => {
+      validTimezones.forEach((timezone) => {
         expect(typeof timezone).toBe('string');
         expect(timezone.length).toBeGreaterThan(0);
       });
@@ -425,7 +427,7 @@ describe('User Authentication and Profile Management', () => {
     it('should handle valid language codes', () => {
       const validLanguages = ['en', 'es', 'fr', 'de', 'ja'];
 
-      validLanguages.forEach(lang => {
+      validLanguages.forEach((lang) => {
         expect(typeof lang).toBe('string');
         expect(lang.length).toBeGreaterThanOrEqual(2);
       });

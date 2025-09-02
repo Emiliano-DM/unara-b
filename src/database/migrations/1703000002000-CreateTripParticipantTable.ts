@@ -1,6 +1,14 @@
-import { MigrationInterface, QueryRunner, Table, Index, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  Index,
+  TableIndex,
+} from 'typeorm';
 
-export class CreateTripParticipantTable1703000002000 implements MigrationInterface {
+export class CreateTripParticipantTable1703000002000
+  implements MigrationInterface
+{
   name = 'CreateTripParticipantTable1703000002000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -84,20 +92,29 @@ export class CreateTripParticipantTable1703000002000 implements MigrationInterfa
     );
 
     // Create indexes for performance
-    await queryRunner.createIndex('trip_participant', new TableIndex({
-      name: 'IDX_TRIP_PARTICIPANT_TRIP_ID',
-      columnNames: ['tripId'],
-    }));
-    
-    await queryRunner.createIndex('trip_participant', new TableIndex({
-      name: 'IDX_TRIP_PARTICIPANT_USER_ID',
-      columnNames: ['userId'],
-    }));
-    
-    await queryRunner.createIndex('trip_participant', new TableIndex({
-      name: 'IDX_TRIP_PARTICIPANT_STATUS',
-      columnNames: ['status'],
-    }));
+    await queryRunner.createIndex(
+      'trip_participant',
+      new TableIndex({
+        name: 'IDX_TRIP_PARTICIPANT_TRIP_ID',
+        columnNames: ['tripId'],
+      }),
+    );
+
+    await queryRunner.createIndex(
+      'trip_participant',
+      new TableIndex({
+        name: 'IDX_TRIP_PARTICIPANT_USER_ID',
+        columnNames: ['userId'],
+      }),
+    );
+
+    await queryRunner.createIndex(
+      'trip_participant',
+      new TableIndex({
+        name: 'IDX_TRIP_PARTICIPANT_STATUS',
+        columnNames: ['status'],
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

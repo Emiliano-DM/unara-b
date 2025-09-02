@@ -7,9 +7,7 @@ import { LuggageCategory } from './entities/luggage-category.entity';
 @Module({
   controllers: [LuggageCategoriesController],
   providers: [LuggageCategoriesService],
-  imports: [
-    TypeOrmModule.forFeature([LuggageCategory]),
-  ],
+  imports: [TypeOrmModule.forFeature([LuggageCategory])],
   exports: [TypeOrmModule],
 })
 export class LuggageCategoriesModule {}

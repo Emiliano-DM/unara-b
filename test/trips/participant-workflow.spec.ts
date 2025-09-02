@@ -122,12 +122,16 @@ describe('Participant Workflow Integration Tests', () => {
 
       // Mock user lookup for owner
       userRepository.findOne.mockResolvedValue(mockOwner);
-      
+
       // Mock trip creation
-      const newTrip = { ...mockTrip, ...createTripDto, generateShareToken: jest.fn() };
+      const newTrip = {
+        ...mockTrip,
+        ...createTripDto,
+        generateShareToken: jest.fn(),
+      };
       tripRepository.create.mockReturnValue(newTrip);
       tripRepository.save.mockResolvedValue(newTrip);
-      
+
       // Mock owner participant creation
       const ownerParticipant = {
         id: 'owner-participant-uuid',
@@ -140,7 +144,7 @@ describe('Participant Workflow Integration Tests', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       } as TripParticipant;
-      
+
       participantRepository.create.mockReturnValue(ownerParticipant);
       participantRepository.save.mockResolvedValue(ownerParticipant);
 
@@ -167,11 +171,13 @@ describe('Participant Workflow Integration Tests', () => {
       // Setup trip with owner participant
       const tripWithOwner = {
         ...mockTrip,
-        participants: [{
-          user: mockOwner,
-          role: 'owner',
-          status: 'joined',
-        }],
+        participants: [
+          {
+            user: mockOwner,
+            role: 'owner',
+            status: 'joined',
+          },
+        ],
       } as Trip;
 
       tripRepository.findOne.mockResolvedValue(tripWithOwner);
@@ -197,7 +203,7 @@ describe('Participant Workflow Integration Tests', () => {
       const inviteResult1 = await service.inviteParticipant(
         'trip-uuid',
         { userId: mockUser1.id, role: 'admin' },
-        mockOwner.id
+        mockOwner.id,
       );
 
       expect(inviteResult1.role).toBe('admin');
@@ -223,7 +229,7 @@ describe('Participant Workflow Integration Tests', () => {
       const inviteResult2 = await service.inviteParticipant(
         'trip-uuid',
         { userId: mockUser2.id, role: 'participant' },
-        mockOwner.id
+        mockOwner.id,
       );
 
       expect(inviteResult2.role).toBe('participant');
@@ -272,8 +278,12 @@ describe('Participant Workflow Integration Tests', () => {
 
   describe('Public Trip Join Workflow', () => {
     it('should allow users to join public trips without invitation', async () => {
-      const publicTrip = { ...mockTrip, isPublic: true, generateShareToken: jest.fn() };
-      
+      const publicTrip = {
+        ...mockTrip,
+        isPublic: true,
+        generateShareToken: jest.fn(),
+      };
+
       tripRepository.findOne.mockResolvedValue(publicTrip);
       userRepository.findOne.mockResolvedValue(mockUser1);
       participantRepository.findOne.mockResolvedValue(null); // No existing participation
@@ -347,20 +357,23 @@ describe('Participant Workflow Integration Tests', () => {
         'trip-uuid',
         mockUser1.id,
         { role: 'admin' },
-        mockOwner.id
+        mockOwner.id,
       );
 
       expect(promoteResult.role).toBe('admin');
 
       // Test demotion back to participant
-      const demotedParticipant = { ...promotedParticipant, role: 'participant' };
+      const demotedParticipant = {
+        ...promotedParticipant,
+        role: 'participant',
+      };
       participantRepository.save.mockResolvedValue(demotedParticipant);
 
       const demoteResult = await service.updateParticipantRole(
         'trip-uuid',
         mockUser1.id,
         { role: 'participant' },
-        mockOwner.id
+        mockOwner.id,
       );
 
       expect(demoteResult.role).toBe('participant');
@@ -407,7 +420,7 @@ describe('Participant Workflow Integration Tests', () => {
       const result = await service.inviteParticipant(
         'trip-uuid',
         { userId: mockUser2.id, role: 'participant' },
-        mockUser1.id // Admin is doing the inviting
+        mockUser1.id, // Admin is doing the inviting
       );
 
       expect(result.invitedBy).toBe(mockUser1);
@@ -417,11 +430,15 @@ describe('Participant Workflow Integration Tests', () => {
 
   describe('Leave and Rejoin Workflow', () => {
     it('should handle user leaving and then rejoining public trip', async () => {
-      const publicTrip = { ...mockTrip, isPublic: true, generateShareToken: jest.fn() };
-      
+      const publicTrip = {
+        ...mockTrip,
+        isPublic: true,
+        generateShareToken: jest.fn(),
+      };
+
       // First, simulate leaving
       tripRepository.findOne.mockResolvedValue(publicTrip);
-      
+
       const participantToRemove = {
         id: 'participant-to-remove',
         trip: publicTrip,
@@ -432,13 +449,15 @@ describe('Participant Workflow Integration Tests', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       } as TripParticipant;
-      
+
       participantRepository.findOne.mockResolvedValue(participantToRemove);
       participantRepository.remove.mockResolvedValue(undefined);
 
       await service.leaveTrip('trip-uuid', mockUser1.id);
 
-      expect(participantRepository.remove).toHaveBeenCalledWith(participantToRemove);
+      expect(participantRepository.remove).toHaveBeenCalledWith(
+        participantToRemove,
+      );
 
       // Then simulate rejoining
       userRepository.findOne.mockResolvedValue(mockUser1);
@@ -495,7 +514,7 @@ describe('Participant Workflow Integration Tests', () => {
 
       // Should deny access after leaving
       await expect(
-        service.findOne('trip-uuid', mockUser1.id)
+        service.findOne('trip-uuid', mockUser1.id),
       ).rejects.toThrow();
     });
   });
@@ -526,7 +545,7 @@ describe('Participant Workflow Integration Tests', () => {
       const inviteResult = await service.inviteParticipant(
         'trip-uuid',
         { userId: mockUser1.id, role: 'participant' },
-        mockOwner.id
+        mockOwner.id,
       );
       expect(inviteResult.status).toBe('invited');
 
@@ -556,7 +575,7 @@ describe('Participant Workflow Integration Tests', () => {
         'trip-uuid',
         mockUser1.id,
         { role: 'admin' },
-        mockOwner.id
+        mockOwner.id,
       );
       expect(promoteResult.role).toBe('admin');
 
@@ -570,7 +589,7 @@ describe('Participant Workflow Integration Tests', () => {
         'trip-uuid',
         mockUser1.id,
         { role: 'participant' },
-        mockOwner.id
+        mockOwner.id,
       );
       expect(demoteResult.role).toBe('participant');
 
@@ -580,7 +599,9 @@ describe('Participant Workflow Integration Tests', () => {
       participantRepository.remove.mockResolvedValue(undefined);
 
       await service.leaveTrip('trip-uuid', mockUser1.id);
-      expect(participantRepository.remove).toHaveBeenCalledWith(currentParticipant);
+      expect(participantRepository.remove).toHaveBeenCalledWith(
+        currentParticipant,
+      );
     });
   });
 });

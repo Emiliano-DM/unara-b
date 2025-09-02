@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -16,8 +21,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @ApiOperation({ summary: 'Register a new user account' })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'User successfully registered',
     schema: {
       type: 'object',
@@ -28,13 +33,16 @@ export class AuthController {
           properties: {
             id: { type: 'string', example: 'uuid-string' },
             email: { type: 'string', example: 'user@example.com' },
-            username: { type: 'string', example: 'username' }
-          }
-        }
-      }
-    }
+            username: { type: 'string', example: 'username' },
+          },
+        },
+      },
+    },
   })
-  @ApiResponse({ status: 400, description: 'Invalid input data or user already exists' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data or user already exists',
+  })
   @ApiResponse({ status: 429, description: 'Too many requests' })
   @Post('register')
   @AuthThrottle()
@@ -43,8 +51,8 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Login successful',
     schema: {
       type: 'object',
@@ -55,11 +63,11 @@ export class AuthController {
           properties: {
             id: { type: 'string', example: 'uuid-string' },
             email: { type: 'string', example: 'user@example.com' },
-            username: { type: 'string', example: 'username' }
-          }
-        }
-      }
-    }
+            username: { type: 'string', example: 'username' },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
@@ -70,12 +78,15 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'User profile retrieved successfully',
-    type: User 
+    type: User,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing token' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Get('profile')
@@ -84,15 +95,18 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Request password reset token' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Password reset token sent to email',
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Password reset token sent to email' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Password reset token sent to email',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
@@ -103,15 +117,15 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Reset password using token' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Password reset successful',
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Password reset successful' }
-      }
-    }
+        message: { type: 'string', example: 'Password reset successful' },
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
@@ -122,8 +136,8 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Authenticate using social provider' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Social authentication successful',
     schema: {
       type: 'object',
@@ -136,11 +150,11 @@ export class AuthController {
             id: { type: 'string', example: 'uuid-string' },
             email: { type: 'string', example: 'user@example.com' },
             username: { type: 'string', example: 'username' },
-            socialProvider: { type: 'string', example: 'google' }
-          }
-        }
-      }
-    }
+            socialProvider: { type: 'string', example: 'google' },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Invalid provider data' })
   @ApiResponse({ status: 401, description: 'Invalid social auth token' })
@@ -152,8 +166,8 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Refresh access token' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Token refresh successful',
     schema: {
       type: 'object',
@@ -164,11 +178,11 @@ export class AuthController {
           properties: {
             id: { type: 'string', example: 'uuid-string' },
             email: { type: 'string', example: 'user@example.com' },
-            username: { type: 'string', example: 'username' }
-          }
-        }
-      }
-    }
+            username: { type: 'string', example: 'username' },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
   @ApiResponse({ status: 429, description: 'Too many requests' })

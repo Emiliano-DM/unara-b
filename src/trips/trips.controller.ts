@@ -10,7 +10,13 @@ import {
   ParseUUIDPipe,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { TripsService } from './trips.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
@@ -48,7 +54,10 @@ export class TripsController {
   }
 
   @ApiOperation({ summary: 'Get all trips for the current user' })
-  @ApiResponse({ status: 200, description: 'List of user trips retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of user trips retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Get()
   findAll(@Query() filterTripDto: FilterTripDto, @CurrentUser() user: User) {
@@ -56,7 +65,11 @@ export class TripsController {
   }
 
   @ApiOperation({ summary: 'Get trip by share token (public access)' })
-  @ApiParam({ name: 'token', description: 'Trip share token', example: 'abc123token' })
+  @ApiParam({
+    name: 'token',
+    description: 'Trip share token',
+    example: 'abc123token',
+  })
   @ApiResponse({ status: 200, description: 'Trip retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Trip not found or not public' })
   @Get('share/:token')
@@ -66,7 +79,10 @@ export class TripsController {
 
   @ApiOperation({ summary: 'Get trip details by ID' })
   @ApiParam({ name: 'id', description: 'Trip UUID', format: 'uuid' })
-  @ApiResponse({ status: 200, description: 'Trip details retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Trip details retrieved successfully',
+  })
   @ApiResponse({ status: 404, description: 'Trip not found or access denied' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Get(':id')
@@ -94,16 +110,26 @@ export class TripsController {
     @Body() inviteParticipantDto: InviteParticipantDto,
     @CurrentUser() user: User,
   ) {
-    return this.tripsService.inviteParticipant(tripId, inviteParticipantDto, user.id);
+    return this.tripsService.inviteParticipant(
+      tripId,
+      inviteParticipantDto,
+      user.id,
+    );
   }
 
   @Post(':id/join')
-  joinTrip(@Param('id', ParseUUIDPipe) tripId: string, @CurrentUser() user: User) {
+  joinTrip(
+    @Param('id', ParseUUIDPipe) tripId: string,
+    @CurrentUser() user: User,
+  ) {
     return this.tripsService.joinTrip(tripId, user.id);
   }
 
   @Delete(':id/leave')
-  leaveTrip(@Param('id', ParseUUIDPipe) tripId: string, @CurrentUser() user: User) {
+  leaveTrip(
+    @Param('id', ParseUUIDPipe) tripId: string,
+    @CurrentUser() user: User,
+  ) {
     return this.tripsService.leaveTrip(tripId, user.id);
   }
 

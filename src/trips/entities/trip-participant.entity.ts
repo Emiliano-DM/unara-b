@@ -20,8 +20,8 @@ export class TripParticipant {
   id: string;
 
   @Index()
-  @ManyToOne(() => Trip, trip => trip.participants, { 
-    onDelete: 'CASCADE' 
+  @ManyToOne(() => Trip, (trip) => trip.participants, {
+    onDelete: 'CASCADE',
   })
   trip: Trip;
 
@@ -32,7 +32,7 @@ export class TripParticipant {
   @Column({
     type: 'enum',
     enum: ParticipantRole,
-    default: ParticipantRole.PARTICIPANT
+    default: ParticipantRole.PARTICIPANT,
   })
   role: ParticipantRole;
 
@@ -40,7 +40,7 @@ export class TripParticipant {
   @Column({
     type: 'enum',
     enum: ParticipantStatus,
-    default: ParticipantStatus.INVITED
+    default: ParticipantStatus.INVITED,
   })
   status: ParticipantStatus;
 

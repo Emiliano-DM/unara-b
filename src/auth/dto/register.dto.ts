@@ -1,11 +1,18 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
   @ApiProperty({
     description: 'User first name',
     example: 'John',
-    maxLength: 100
+    maxLength: 100,
   })
   @IsString()
   @IsNotEmpty()
@@ -15,7 +22,7 @@ export class RegisterDto {
   @ApiProperty({
     description: 'User last name',
     example: 'Doe',
-    maxLength: 100
+    maxLength: 100,
   })
   @IsString()
   @IsNotEmpty()
@@ -26,7 +33,7 @@ export class RegisterDto {
     description: 'User email address (must be unique)',
     example: 'john.doe@example.com',
     format: 'email',
-    maxLength: 255
+    maxLength: 255,
   })
   @IsEmail()
   @IsNotEmpty()
@@ -36,7 +43,7 @@ export class RegisterDto {
   @ApiProperty({
     description: 'Unique username (must be unique)',
     example: 'johndoe123',
-    maxLength: 50
+    maxLength: 50,
   })
   @IsString()
   @IsNotEmpty()
@@ -47,7 +54,7 @@ export class RegisterDto {
     description: 'Password (minimum 8 characters)',
     example: 'SecurePassword123',
     minLength: 8,
-    format: 'password'
+    format: 'password',
   })
   @IsString()
   @IsNotEmpty()
@@ -58,7 +65,7 @@ export class RegisterDto {
     description: 'Phone number (optional)',
     example: '+1234567890',
     required: false,
-    maxLength: 20
+    maxLength: 20,
   })
   @IsOptional()
   @IsString()
@@ -69,7 +76,7 @@ export class RegisterDto {
     description: 'Country of residence (optional)',
     example: 'United States',
     required: false,
-    maxLength: 100
+    maxLength: 100,
   })
   @IsOptional()
   @IsString()

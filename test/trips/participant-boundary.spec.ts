@@ -143,7 +143,7 @@ describe('Participant Boundary Condition Tests', () => {
       const result = await service.inviteParticipant(
         'trip-uuid',
         { userId: mockUser.id, role: 'participant' },
-        mockOwner.id
+        mockOwner.id,
       );
 
       expect(result).toEqual(participantWithoutInviter);
@@ -152,10 +152,10 @@ describe('Participant Boundary Condition Tests', () => {
 
   describe('Status Transition Edge Cases', () => {
     it('should handle all possible status transitions correctly', async () => {
-      const trip = { 
-        id: 'trip-uuid', 
+      const trip = {
+        id: 'trip-uuid',
         name: 'Test Trip',
-        owner: mockOwner, 
+        owner: mockOwner,
         status: 'planning',
         isPublic: false,
         shareToken: 'test-token',
@@ -165,7 +165,7 @@ describe('Participant Boundary Condition Tests', () => {
         items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        generateShareToken: jest.fn() 
+        generateShareToken: jest.fn(),
       } as Trip;
       tripRepository.findOne.mockResolvedValue(trip);
       userRepository.findOne.mockResolvedValue(mockUser);
@@ -180,13 +180,13 @@ describe('Participant Boundary Condition Tests', () => {
       } as TripParticipant;
 
       participantRepository.findOne.mockResolvedValue(invitedParticipant);
-      
+
       const joinedParticipant = {
         ...invitedParticipant,
         status: 'joined',
         joinedAt: new Date(),
       };
-      
+
       participantRepository.save.mockResolvedValue(joinedParticipant);
 
       const result = await service.joinTrip('trip-uuid', mockUser.id);
@@ -269,7 +269,11 @@ describe('Participant Boundary Condition Tests', () => {
       participantRepository.create.mockReturnValue(participantWithDefaultRole);
       participantRepository.save.mockResolvedValue(participantWithDefaultRole);
 
-      const result = await service.inviteParticipant('trip-uuid', inviteDto, mockOwner.id);
+      const result = await service.inviteParticipant(
+        'trip-uuid',
+        inviteDto,
+        mockOwner.id,
+      );
       expect(result.role).toBe('participant');
     });
 
@@ -294,17 +298,22 @@ describe('Participant Boundary Condition Tests', () => {
 
       // Should prevent changing owner role
       await expect(
-        service.updateParticipantRole('trip-uuid', mockOwner.id, { role: 'participant' }, mockOwner.id)
+        service.updateParticipantRole(
+          'trip-uuid',
+          mockOwner.id,
+          { role: 'participant' },
+          mockOwner.id,
+        ),
       ).rejects.toThrow();
     });
   });
 
   describe('Date and Time Boundary Conditions', () => {
     it('should handle date fields correctly on join/leave operations', async () => {
-      const trip = { 
-        id: 'trip-uuid', 
+      const trip = {
+        id: 'trip-uuid',
         name: 'Test Trip',
-        owner: mockOwner, 
+        owner: mockOwner,
         status: 'planning',
         isPublic: false,
         shareToken: 'test-token',
@@ -314,7 +323,7 @@ describe('Participant Boundary Condition Tests', () => {
         items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        generateShareToken: jest.fn() 
+        generateShareToken: jest.fn(),
       } as Trip;
       const currentTime = new Date();
 
@@ -345,9 +354,11 @@ describe('Participant Boundary Condition Tests', () => {
       participantRepository.save.mockResolvedValue(joinedParticipant);
 
       const joinResult = await service.joinTrip('trip-uuid', mockUser.id);
-      
+
       expect(joinResult.joinedAt).toBeDefined();
-      expect(joinResult.joinedAt.getTime()).toBeGreaterThanOrEqual(currentTime.getTime() - 1000);
+      expect(joinResult.joinedAt.getTime()).toBeGreaterThanOrEqual(
+        currentTime.getTime() - 1000,
+      );
     });
 
     it('should handle future start dates for leave policy', async () => {
@@ -376,7 +387,9 @@ describe('Participant Boundary Condition Tests', () => {
       await service.leaveTrip('trip-uuid', mockUser.id);
 
       // Should still process the leave operation
-      expect(participantRepository.remove).toHaveBeenCalledWith(participantToLeave);
+      expect(participantRepository.remove).toHaveBeenCalledWith(
+        participantToLeave,
+      );
     });
   });
 
@@ -391,7 +404,7 @@ describe('Participant Boundary Condition Tests', () => {
             user: mockOwner,
             role: 'owner',
             status: 'joined',
-          }
+          },
         ],
       } as Trip;
 
@@ -421,7 +434,7 @@ describe('Participant Boundary Condition Tests', () => {
             user: mockUser,
             role: 'participant',
             status: 'joined',
-          }
+          },
         ],
       } as Trip;
 
@@ -446,7 +459,7 @@ describe('Participant Boundary Condition Tests', () => {
       const result = await service.inviteParticipant(
         'trip-uuid',
         { userId: mockUser.id, role: 'participant' },
-        'admin1'
+        'admin1',
       );
 
       expect(result).toEqual(newParticipant);
@@ -455,10 +468,10 @@ describe('Participant Boundary Condition Tests', () => {
 
   describe('Data Integrity Boundary Conditions', () => {
     it('should handle malformed participant data gracefully', async () => {
-      const trip = { 
-        id: 'trip-uuid', 
+      const trip = {
+        id: 'trip-uuid',
         name: 'Test Trip',
-        owner: mockOwner, 
+        owner: mockOwner,
         status: 'planning',
         isPublic: false,
         shareToken: 'test-token',
@@ -468,7 +481,7 @@ describe('Participant Boundary Condition Tests', () => {
         items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        generateShareToken: jest.fn() 
+        generateShareToken: jest.fn(),
       } as Trip;
       tripRepository.findOne.mockResolvedValue(trip);
 
@@ -477,15 +490,15 @@ describe('Participant Boundary Condition Tests', () => {
 
       // Should throw NotFoundException when participant is not found
       await expect(
-        service.leaveTrip('trip-uuid', 'some-user-id')
+        service.leaveTrip('trip-uuid', 'some-user-id'),
       ).rejects.toThrow('Participation not found');
     });
 
     it('should validate UUID format boundaries', async () => {
-      const trip = { 
-        id: 'trip-uuid', 
+      const trip = {
+        id: 'trip-uuid',
         name: 'Test Trip',
-        owner: mockOwner, 
+        owner: mockOwner,
         status: 'planning',
         isPublic: false,
         shareToken: 'test-token',
@@ -495,10 +508,10 @@ describe('Participant Boundary Condition Tests', () => {
         items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        generateShareToken: jest.fn() 
+        generateShareToken: jest.fn(),
       } as Trip;
       tripRepository.findOne.mockResolvedValue(trip);
-      
+
       // This would typically be caught by validation pipes in the controller
       // But service should handle edge cases gracefully
       const invalidUUIDs = [
@@ -510,9 +523,9 @@ describe('Participant Boundary Condition Tests', () => {
 
       for (const invalidUUID of invalidUUIDs) {
         userRepository.findOne.mockResolvedValue(null);
-        
+
         await expect(
-          service.joinTrip('trip-uuid', invalidUUID)
+          service.joinTrip('trip-uuid', invalidUUID),
         ).rejects.toThrow();
       }
     });
@@ -520,14 +533,19 @@ describe('Participant Boundary Condition Tests', () => {
 
   describe('Concurrent Operation Boundaries', () => {
     it('should handle rapid successive operations on same participant', async () => {
-      const trip = { id: 'trip-uuid', owner: mockOwner, isPublic: true } as Trip;
+      const trip = {
+        id: 'trip-uuid',
+        owner: mockOwner,
+        isPublic: true,
+      } as Trip;
       tripRepository.findOne.mockResolvedValue(trip);
       userRepository.findOne.mockResolvedValue(mockUser);
 
       // Simulate rapid join attempts
       participantRepository.findOne
         .mockResolvedValueOnce(null) // First call: no existing participant
-        .mockResolvedValueOnce({ // Second call: participant exists (race condition)
+        .mockResolvedValueOnce({
+          // Second call: participant exists (race condition)
           id: 'existing-participant',
           status: 'joined',
         } as TripParticipant);

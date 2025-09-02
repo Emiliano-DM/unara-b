@@ -1,6 +1,6 @@
 export enum LuggageStatus {
   EMPTY = 'empty',
-  PACKING = 'packing', 
+  PACKING = 'packing',
   PACKED = 'packed',
   CHECKED = 'checked',
   DELIVERED = 'delivered',

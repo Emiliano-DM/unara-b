@@ -238,7 +238,8 @@ describe('End-to-End Trip Planning Workflow', () => {
     mountainTrip = {
       id: 'mountain-trip-uuid',
       name: 'Rocky Mountain Adventure',
-      description: 'A 5-day hiking and camping expedition in the Rocky Mountains',
+      description:
+        'A 5-day hiking and camping expedition in the Rocky Mountains',
       destination: 'Rocky Mountain National Park, Colorado',
       startDate: new Date('2024-07-15'),
       endDate: new Date('2024-07-20'),
@@ -246,7 +247,7 @@ describe('End-to-End Trip Planning Workflow', () => {
       owner: tripOwner,
       isPublic: false,
       shareToken: 'mountain-trip-token-123',
-      budget: 2500.00,
+      budget: 2500.0,
       currency: 'USD',
       maxParticipants: 4,
       category: 'Adventure',
@@ -292,30 +293,35 @@ describe('End-to-End Trip Planning Workflow', () => {
       } as TripParticipant);
       participantRepository.save.mockResolvedValue({} as TripParticipant);
 
-      const createdTrip = await tripsService.create(createTripDto, tripOwner.id);
+      const createdTrip = await tripsService.create(
+        createTripDto,
+        tripOwner.id,
+      );
 
       expect(createdTrip.name).toBe('Rocky Mountain Adventure');
-      expect(createdTrip.budget).toBe(2500.00);
+      expect(createdTrip.budget).toBe(2500.0);
       expect(createdTrip.maxParticipants).toBe(4);
       expect(createdTrip.status).toBe(TripStatus.PLANNING);
 
       // Phase 2: Participant Invitation and Joining
       const tripWithOwner = {
         ...mountainTrip,
-        participants: [{
-          user: { id: tripOwner.id },
-          role: ParticipantRole.OWNER,
-          status: ParticipantStatus.JOINED,
-        }],
+        participants: [
+          {
+            user: { id: tripOwner.id },
+            role: ParticipantRole.OWNER,
+            status: ParticipantStatus.JOINED,
+          },
+        ],
         generateShareToken: jest.fn(),
       };
 
       tripRepository.findOne.mockResolvedValue(tripWithOwner as Trip);
       userRepository.findOne
         .mockResolvedValueOnce(participant1) // User to invite
-        .mockResolvedValueOnce(tripOwner)    // Inviter
+        .mockResolvedValueOnce(tripOwner) // Inviter
         .mockResolvedValueOnce(participant2) // Second user to invite
-        .mockResolvedValueOnce(tripOwner);   // Inviter again
+        .mockResolvedValueOnce(tripOwner); // Inviter again
 
       participantRepository.findOne.mockResolvedValue(null); // No existing participation
 
@@ -330,12 +336,12 @@ describe('End-to-End Trip Planning Workflow', () => {
       await tripsService.inviteParticipant(
         mountainTrip.id,
         { userId: participant1.id },
-        tripOwner.id
+        tripOwner.id,
       );
       await tripsService.inviteParticipant(
         mountainTrip.id,
         { userId: participant2.id },
-        tripOwner.id
+        tripOwner.id,
       );
 
       expect(participantRepository.save).toHaveBeenCalledTimes(3); // Owner + 2 invitations
@@ -404,20 +410,24 @@ describe('End-to-End Trip Planning Workflow', () => {
         const createdItem = await itemsService.createForTrip(
           mountainTrip.id,
           itemDto,
-          tripOwner.id
+          tripOwner.id,
         );
 
         createdItems.push(createdItem);
       }
 
       expect(createdItems).toHaveLength(5);
-      
+
       // Verify item assignment distribution
-      const assignedItems = createdItems.filter(item => item.assignedTo !== null);
-      const sharedItems = createdItems.filter(item => item.assignedTo === null);
-      
+      const assignedItems = createdItems.filter(
+        (item) => item.assignedTo !== null,
+      );
+      const sharedItems = createdItems.filter(
+        (item) => item.assignedTo === null,
+      );
+
       expect(assignedItems).toHaveLength(3); // Sleeping bags, first aid, stove
-      expect(sharedItems).toHaveLength(2);   // Tents, boots (everyone brings own)
+      expect(sharedItems).toHaveLength(2); // Tents, boots (everyone brings own)
     });
 
     it('should manage luggage capacity and packing workflow', async () => {
@@ -460,9 +470,13 @@ describe('End-to-End Trip Planning Workflow', () => {
       const createdLuggage: Luggage[] = [];
 
       for (const luggageDto of luggagePieces) {
-        const user = luggageDto.userId === tripOwner.id ? tripOwner : 
-                    luggageDto.userId === participant1.id ? participant1 : participant2;
-        
+        const user =
+          luggageDto.userId === tripOwner.id
+            ? tripOwner
+            : luggageDto.userId === participant1.id
+              ? participant1
+              : participant2;
+
         userRepository.findOneBy.mockResolvedValue(user);
 
         const luggage = {
@@ -483,7 +497,7 @@ describe('End-to-End Trip Planning Workflow', () => {
         const createdLuggageItem = await luggageService.createForTrip(
           mountainTrip.id,
           luggageDto,
-          user.id
+          user.id,
         );
 
         createdLuggage.push(createdLuggageItem);
@@ -492,9 +506,12 @@ describe('End-to-End Trip Planning Workflow', () => {
       expect(createdLuggage).toHaveLength(4);
 
       // Verify capacity distribution
-      const personalPacks = createdLuggage.filter(l => l.maxWeight !== null);
-      const sharedStorage = createdLuggage.filter(l => l.maxWeight === null);
-      const totalPersonalCapacity = personalPacks.reduce((sum, l) => sum + l.maxWeight, 0);
+      const personalPacks = createdLuggage.filter((l) => l.maxWeight !== null);
+      const sharedStorage = createdLuggage.filter((l) => l.maxWeight === null);
+      const totalPersonalCapacity = personalPacks.reduce(
+        (sum, l) => sum + l.maxWeight,
+        0,
+      );
 
       expect(personalPacks).toHaveLength(3);
       expect(sharedStorage).toHaveLength(1);
@@ -550,7 +567,7 @@ describe('End-to-End Trip Planning Workflow', () => {
           update.luggageId,
           { status: update.status, description: update.description },
           mountainTrip.id,
-          tripOwner.id
+          tripOwner.id,
         );
 
         expect(result.status).toBe(update.status);
@@ -595,7 +612,7 @@ describe('End-to-End Trip Planning Workflow', () => {
         const result = await tripsService.update(
           mountainTrip.id,
           { status: update.status, description: update.description },
-          tripOwner.id
+          tripOwner.id,
         );
 
         expect(result.status).toBe(update.status);
@@ -604,7 +621,7 @@ describe('End-to-End Trip Planning Workflow', () => {
       // Verify final trip state
       expect(mountainTrip.startDate).toBeInstanceOf(Date);
       expect(mountainTrip.endDate).toBeInstanceOf(Date);
-      expect(mountainTrip.budget).toBe(2500.00);
+      expect(mountainTrip.budget).toBe(2500.0);
       expect(mountainTrip.maxParticipants).toBe(4);
     });
   });
@@ -618,17 +635,21 @@ describe('End-to-End Trip Planning Workflow', () => {
         itemsPacked: 3,
         luggagePieces: 4,
         luggagePacked: 2,
-        budgetAllocated: 2500.00,
+        budgetAllocated: 2500.0,
         maxParticipants: 4,
       };
 
-      const participationRate = (planningMetrics.participantsJoined / planningMetrics.maxParticipants) * 100;
-      const itemsReadiness = (planningMetrics.itemsPacked / planningMetrics.itemsPlanned) * 100;
-      const packingProgress = (planningMetrics.luggagePacked / planningMetrics.luggagePieces) * 100;
+      const participationRate =
+        (planningMetrics.participantsJoined / planningMetrics.maxParticipants) *
+        100;
+      const itemsReadiness =
+        (planningMetrics.itemsPacked / planningMetrics.itemsPlanned) * 100;
+      const packingProgress =
+        (planningMetrics.luggagePacked / planningMetrics.luggagePieces) * 100;
 
-      expect(participationRate).toBe(25);  // 1 of 4 max participants
-      expect(itemsReadiness).toBe(60);     // 3 of 5 items packed
-      expect(packingProgress).toBe(50);    // 2 of 4 luggage pieces packed
+      expect(participationRate).toBe(25); // 1 of 4 max participants
+      expect(itemsReadiness).toBe(60); // 3 of 5 items packed
+      expect(packingProgress).toBe(50); // 2 of 4 luggage pieces packed
     });
 
     it('should identify workflow bottlenecks', () => {
@@ -638,7 +659,7 @@ describe('End-to-End Trip Planning Workflow', () => {
         participantsResponded: false, // Bottleneck: waiting for responses
         itemsAssigned: true,
         luggageCreated: true,
-        packingStarted: false,       // Bottleneck: packing not started
+        packingStarted: false, // Bottleneck: packing not started
         tripActive: false,
       };
 
@@ -663,9 +684,15 @@ describe('End-to-End Trip Planning Workflow', () => {
         estimatedWeight: 32.5, // kg
       };
 
-      const assignmentRate = (resourceAllocation.assignedItems / resourceAllocation.totalItems) * 100;
-      const capacityUtilization = (resourceAllocation.estimatedWeight / resourceAllocation.totalCapacity) * 100;
-      const personalToSharedRatio = resourceAllocation.personalLuggage / resourceAllocation.sharedLuggage;
+      const assignmentRate =
+        (resourceAllocation.assignedItems / resourceAllocation.totalItems) *
+        100;
+      const capacityUtilization =
+        (resourceAllocation.estimatedWeight /
+          resourceAllocation.totalCapacity) *
+        100;
+      const personalToSharedRatio =
+        resourceAllocation.personalLuggage / resourceAllocation.sharedLuggage;
 
       expect(assignmentRate).toBe(60);
       expect(capacityUtilization).toBeCloseTo(72.22, 2);
@@ -684,35 +711,48 @@ describe('End-to-End Trip Planning Workflow', () => {
 
       // Simulate items that need reassignment
       const orphanedItems = [
-        { id: 'item-1', assignedTo: 'dropped-participant', name: 'Sleeping Bags' },
-        { id: 'item-2', assignedTo: 'dropped-participant', name: 'Portable Stove' },
+        {
+          id: 'item-1',
+          assignedTo: 'dropped-participant',
+          name: 'Sleeping Bags',
+        },
+        {
+          id: 'item-2',
+          assignedTo: 'dropped-participant',
+          name: 'Portable Stove',
+        },
       ];
 
-      const reassignmentPlan = orphanedItems.map(item => ({
+      const reassignmentPlan = orphanedItems.map((item) => ({
         ...item,
         newAssignedTo: participant2.id, // Reassign to remaining participant
         status: 'reassignment-needed',
       }));
 
       expect(reassignmentPlan).toHaveLength(2);
-      expect(reassignmentPlan.every(item => item.newAssignedTo === participant2.id)).toBe(true);
+      expect(
+        reassignmentPlan.every(
+          (item) => item.newAssignedTo === participant2.id,
+        ),
+      ).toBe(true);
     });
 
     it('should handle capacity overflow scenario', async () => {
       const capacityOverflow = {
         luggageCapacity: 15.0, // kg
-        currentWeight: 18.5,   // kg - exceeds capacity
-        overflowAmount: 3.5,   // kg
+        currentWeight: 18.5, // kg - exceeds capacity
+        overflowAmount: 3.5, // kg
         redistributionNeeded: true,
       };
 
       const redistributionStrategy = {
         moveToSharedStorage: 2.0, // kg
         reduceNonEssentials: 1.5, // kg
-        totalReduction: 3.5,      // kg
+        totalReduction: 3.5, // kg
       };
 
-      const finalWeight = capacityOverflow.currentWeight - redistributionStrategy.totalReduction;
+      const finalWeight =
+        capacityOverflow.currentWeight - redistributionStrategy.totalReduction;
       const withinCapacity = finalWeight <= capacityOverflow.luggageCapacity;
 
       expect(finalWeight).toBe(15.0);
@@ -732,7 +772,7 @@ describe('End-to-End Trip Planning Workflow', () => {
         itemsToRemove: weatherUpdate.affectedItems.length,
         itemsToAdd: weatherUpdate.newItems.length,
         accommodationChange: true,
-        budgetImpact: 200.00, // Additional lodge cost
+        budgetImpact: 200.0, // Additional lodge cost
       };
 
       expect(adaptationMetrics.itemsToRemove).toBe(3);
@@ -752,13 +792,15 @@ describe('End-to-End Trip Planning Workflow', () => {
       };
 
       const planningDuration = Math.floor(
-        (timelineMetrics.itemsPlanningCompleteDate.getTime() - timelineMetrics.tripCreationDate.getTime()) 
-        / (1000 * 60 * 60 * 24)
+        (timelineMetrics.itemsPlanningCompleteDate.getTime() -
+          timelineMetrics.tripCreationDate.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
       const preparationDuration = Math.floor(
-        (timelineMetrics.packingCompleteDate.getTime() - timelineMetrics.itemsPlanningCompleteDate.getTime())
-        / (1000 * 60 * 60 * 24)
+        (timelineMetrics.packingCompleteDate.getTime() -
+          timelineMetrics.itemsPlanningCompleteDate.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
       expect(planningDuration).toBe(9); // days
@@ -775,10 +817,15 @@ describe('End-to-End Trip Planning Workflow', () => {
         invitationsSent: 2,
       };
 
-      const contributionBalance = collaborationMetrics.itemsCreatedByParticipants / 
-        (collaborationMetrics.itemsCreatedByOwner + collaborationMetrics.itemsCreatedByParticipants);
+      const contributionBalance =
+        collaborationMetrics.itemsCreatedByParticipants /
+        (collaborationMetrics.itemsCreatedByOwner +
+          collaborationMetrics.itemsCreatedByParticipants);
 
-      const responseRate = (collaborationMetrics.responsesToInvitations / collaborationMetrics.invitationsSent) * 100;
+      const responseRate =
+        (collaborationMetrics.responsesToInvitations /
+          collaborationMetrics.invitationsSent) *
+        100;
 
       expect(contributionBalance).toBeCloseTo(0.375, 3); // 37.5% participant contribution
       expect(responseRate).toBe(100); // 100% response rate

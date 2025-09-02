@@ -1,4 +1,10 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -29,7 +35,9 @@ export class ItemsService {
   async create(createItemDto: CreateItemDto): Promise<Item> {
     const { categoryId, ...itemData } = createItemDto;
 
-    const category = await this.itemCategoryRepository.findOneBy({ id: categoryId });
+    const category = await this.itemCategoryRepository.findOneBy({
+      id: categoryId,
+    });
 
     if (!category) {
       throw new NotFoundException(`Category with id ${categoryId} not found`);
@@ -49,16 +57,11 @@ export class ItemsService {
   }
 
   async findAll(filterItemDto: FilterItemDto): Promise<Item[]> {
-    const { 
-      limit = 10, 
-      offset = 0,
-      name,
-      categoryId,
-    } = filterItemDto;
+    const { limit = 10, offset = 0, name, categoryId } = filterItemDto;
 
     const query = this.itemRepository
-                      .createQueryBuilder('item')
-                      .leftJoinAndSelect('item.category', 'category');
+      .createQueryBuilder('item')
+      .leftJoinAndSelect('item.category', 'category');
 
     if (name) {
       query.andWhere('item.name ILIKE :name', { name: `%${name}%` });
@@ -74,7 +77,7 @@ export class ItemsService {
   }
 
   async findOne(id: string): Promise<Item> {
-    const item = await this.itemRepository.findOne({ 
+    const item = await this.itemRepository.findOne({
       where: { id },
       relations: { category: true },
     });
@@ -91,7 +94,9 @@ export class ItemsService {
 
     let category: ItemCategory | null = null;
     if (categoryId) {
-      category = await this.itemCategoryRepository.findOneBy({ id: categoryId });
+      category = await this.itemCategoryRepository.findOneBy({
+        id: categoryId,
+      });
 
       if (!category) {
         throw new NotFoundException(`Category with id ${categoryId} not found`);
@@ -126,14 +131,20 @@ export class ItemsService {
     await this.itemRepository.remove(item);
   }
 
-  async createForTrip(tripId: string, createItemDto: CreateItemDto, userId: string): Promise<Item> {
+  async createForTrip(
+    tripId: string,
+    createItemDto: CreateItemDto,
+    userId: string,
+  ): Promise<Item> {
     try {
       // Validate user has access to the trip
       const trip = await this.tripsService.findOne(tripId, userId);
 
       const { categoryId, ...itemData } = createItemDto;
 
-      const category = await this.itemCategoryRepository.findOneBy({ id: categoryId });
+      const category = await this.itemCategoryRepository.findOneBy({
+        id: categoryId,
+      });
       if (!category) {
         throw new NotFoundException(`Category with id ${categoryId} not found`);
       }
@@ -152,34 +163,32 @@ export class ItemsService {
 
       await this.itemRepository.save(item);
       return item;
-
     } catch (error) {
       this.handleExceptions(error);
     }
   }
 
-  async findByTrip(tripId: string, userId: string, filterDto?: FilterItemDto): Promise<Item[]> {
+  async findByTrip(
+    tripId: string,
+    userId: string,
+    filterDto?: FilterItemDto,
+  ): Promise<Item[]> {
     // Validate user has access to the trip
     await this.tripsService.findOne(tripId, userId);
 
-    const { 
-      limit = 10, 
-      offset = 0,
-      name,
-      categoryId,
-    } = filterDto || {};
+    const { limit = 10, offset = 0, name, categoryId } = filterDto || {};
 
     const query = this.itemRepository
-                    .createQueryBuilder('item')
-                    .leftJoinAndSelect('item.category', 'category')
-                    .leftJoinAndSelect('item.trip', 'trip')
-                    .leftJoinAndSelect('item.createdBy', 'createdBy')
-                    .andWhere('trip.id = :tripId', { tripId });
+      .createQueryBuilder('item')
+      .leftJoinAndSelect('item.category', 'category')
+      .leftJoinAndSelect('item.trip', 'trip')
+      .leftJoinAndSelect('item.createdBy', 'createdBy')
+      .andWhere('trip.id = :tripId', { tripId });
 
     if (name) {
       query.andWhere('item.name ILIKE :name', { name: `%${name}%` });
     }
-    
+
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });
     }
@@ -189,7 +198,12 @@ export class ItemsService {
     return query.getMany();
   }
 
-  async updateForTrip(itemId: string, updateItemDto: UpdateItemDto, tripId: string, userId: string): Promise<Item> {
+  async updateForTrip(
+    itemId: string,
+    updateItemDto: UpdateItemDto,
+    tripId: string,
+    userId: string,
+  ): Promise<Item> {
     // Validate user has access to the trip
     await this.tripsService.findOne(tripId, userId);
 
@@ -212,7 +226,9 @@ export class ItemsService {
 
     let category: ItemCategory | null = null;
     if (categoryId) {
-      category = await this.itemCategoryRepository.findOneBy({ id: categoryId });
+      category = await this.itemCategoryRepository.findOneBy({
+        id: categoryId,
+      });
       if (!category) {
         throw new NotFoundException(`Category with id ${categoryId} not found`);
       }
@@ -236,7 +252,11 @@ export class ItemsService {
     }
   }
 
-  async removeFromTrip(itemId: string, tripId: string, userId: string): Promise<void> {
+  async removeFromTrip(
+    itemId: string,
+    tripId: string,
+    userId: string,
+  ): Promise<void> {
     // Validate user has access to the trip
     await this.tripsService.findOne(tripId, userId);
 
@@ -264,6 +284,8 @@ export class ItemsService {
 
     this.logger.error(error);
 
-    throw new InternalServerErrorException('Unexpected error, check server logs');
+    throw new InternalServerErrorException(
+      'Unexpected error, check server logs',
+    );
   }
 }

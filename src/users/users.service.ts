@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,7 +13,6 @@ import { FilterUserDto } from './dto/filter-user.dto';
 
 @Injectable()
 export class UsersService {
-  
   private readonly logger = new Logger('UsersService');
 
   constructor(
@@ -44,21 +48,18 @@ export class UsersService {
   }
 
   async findAll(filterUserDto: FilterUserDto): Promise<User[]> {
-    const { 
-      limit = 10, 
-      offset = 0,
-      email,
-      username,
-    } = filterUserDto;
+    const { limit = 10, offset = 0, email, username } = filterUserDto;
 
     const query = this.userRepository.createQueryBuilder('user');
 
     if (email) {
       query.andWhere('user.email ILIKE :email', { email: `%${email}%` });
     }
-    
+
     if (username) {
-      query.andWhere('user.username ILIKE :username', { username: `%${username}%` });
+      query.andWhere('user.username ILIKE :username', {
+        username: `%${username}%`,
+      });
     }
 
     query.skip(offset).take(limit);
@@ -113,8 +114,8 @@ export class UsersService {
   }
 
   async findByResetToken(token: string): Promise<User | null> {
-    return await this.userRepository.findOne({ 
-      where: { passwordResetToken: token } 
+    return await this.userRepository.findOne({
+      where: { passwordResetToken: token },
     });
   }
 
@@ -124,6 +125,8 @@ export class UsersService {
 
     this.logger.error(error);
 
-    throw new InternalServerErrorException('Unexpected error, check server logs');
+    throw new InternalServerErrorException(
+      'Unexpected error, check server logs',
+    );
   }
 }

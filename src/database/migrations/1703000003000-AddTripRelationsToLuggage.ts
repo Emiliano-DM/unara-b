@@ -1,6 +1,15 @@
-import { MigrationInterface, QueryRunner, TableColumn, TableForeignKey, Index, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  TableColumn,
+  TableForeignKey,
+  Index,
+  TableIndex,
+} from 'typeorm';
 
-export class AddTripRelationsToLuggage1703000003000 implements MigrationInterface {
+export class AddTripRelationsToLuggage1703000003000
+  implements MigrationInterface
+{
   name = 'AddTripRelationsToLuggage1703000003000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -49,15 +58,21 @@ export class AddTripRelationsToLuggage1703000003000 implements MigrationInterfac
     );
 
     // Create indexes for performance
-    await queryRunner.createIndex('luggage', new TableIndex({
-      name: 'IDX_LUGGAGE_TRIP_ID',
-      columnNames: ['tripId'],
-    }));
-    
-    await queryRunner.createIndex('luggage', new TableIndex({
-      name: 'IDX_LUGGAGE_USER_ID',
-      columnNames: ['userId'],
-    }));
+    await queryRunner.createIndex(
+      'luggage',
+      new TableIndex({
+        name: 'IDX_LUGGAGE_TRIP_ID',
+        columnNames: ['tripId'],
+      }),
+    );
+
+    await queryRunner.createIndex(
+      'luggage',
+      new TableIndex({
+        name: 'IDX_LUGGAGE_USER_ID',
+        columnNames: ['userId'],
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -115,10 +115,12 @@ describe('Items-Trip Integration', () => {
 
       // Mock category lookup
       itemCategoryRepository.findOneBy.mockResolvedValue(mockCategory);
-      
+
       // Mock user lookup
-      jest.spyOn(itemsService['userRepository'], 'findOneBy').mockResolvedValue(mockUser);
-      
+      jest
+        .spyOn(itemsService['userRepository'], 'findOneBy')
+        .mockResolvedValue(mockUser);
+
       // Mock trip access validation
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
 
@@ -137,9 +139,16 @@ describe('Items-Trip Integration', () => {
       itemRepository.create.mockReturnValue(expectedItem);
       itemRepository.save.mockResolvedValue(expectedItem);
 
-      const result = await itemsService.createForTrip(mockTrip.id, createItemDto, mockUser.id);
+      const result = await itemsService.createForTrip(
+        mockTrip.id,
+        createItemDto,
+        mockUser.id,
+      );
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        mockUser.id,
+      );
       expect(itemRepository.create).toHaveBeenCalledWith({
         name: 'Travel Camera',
         description: 'High-quality travel camera',
@@ -158,13 +167,22 @@ describe('Items-Trip Integration', () => {
       };
 
       // Mock trip not found
-      jest.spyOn(tripsService, 'findOne').mockRejectedValue(new NotFoundException('Trip not found'));
+      jest
+        .spyOn(tripsService, 'findOne')
+        .mockRejectedValue(new NotFoundException('Trip not found'));
 
       await expect(
-        itemsService.createForTrip('non-existent-trip', createItemDto, mockUser.id)
+        itemsService.createForTrip(
+          'non-existent-trip',
+          createItemDto,
+          mockUser.id,
+        ),
       ).rejects.toThrow(NotFoundException);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith('non-existent-trip', mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        'non-existent-trip',
+        mockUser.id,
+      );
       expect(itemRepository.create).not.toHaveBeenCalled();
     });
 
@@ -175,13 +193,22 @@ describe('Items-Trip Integration', () => {
       };
 
       // Mock forbidden access
-      jest.spyOn(tripsService, 'findOne').mockRejectedValue(new ForbiddenException('Access denied'));
+      jest
+        .spyOn(tripsService, 'findOne')
+        .mockRejectedValue(new ForbiddenException('Access denied'));
 
       await expect(
-        itemsService.createForTrip(mockTrip.id, createItemDto, 'unauthorized-user')
+        itemsService.createForTrip(
+          mockTrip.id,
+          createItemDto,
+          'unauthorized-user',
+        ),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, 'unauthorized-user');
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        'unauthorized-user',
+      );
       expect(itemRepository.create).not.toHaveBeenCalled();
     });
   });
@@ -216,28 +243,50 @@ describe('Items-Trip Integration', () => {
         getMany: jest.fn().mockResolvedValue(mockItemList),
       };
 
-      itemRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      itemRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       const result = await itemsService.findByTrip(mockTrip.id, mockUser.id);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        mockUser.id,
+      );
       expect(itemRepository.createQueryBuilder).toHaveBeenCalledWith('item');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('item.category', 'category');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('item.trip', 'trip');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('item.createdBy', 'createdBy');
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('trip.id = :tripId', { tripId: mockTrip.id });
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'item.category',
+        'category',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'item.trip',
+        'trip',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'item.createdBy',
+        'createdBy',
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'trip.id = :tripId',
+        { tripId: mockTrip.id },
+      );
       expect(result).toEqual(mockItemList);
     });
 
     it('should handle user permissions for trip items', async () => {
       // Mock unauthorized access to trip
-      jest.spyOn(tripsService, 'findOne').mockRejectedValue(new ForbiddenException('Access denied'));
+      jest
+        .spyOn(tripsService, 'findOne')
+        .mockRejectedValue(new ForbiddenException('Access denied'));
 
       await expect(
-        itemsService.findByTrip(mockTrip.id, 'unauthorized-user')
+        itemsService.findByTrip(mockTrip.id, 'unauthorized-user'),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, 'unauthorized-user');
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        'unauthorized-user',
+      );
       expect(itemRepository.createQueryBuilder).not.toHaveBeenCalled();
     });
 
@@ -253,7 +302,9 @@ describe('Items-Trip Integration', () => {
         getMany: jest.fn().mockResolvedValue([]),
       };
 
-      itemRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      itemRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       const filterDto = { limit: 5, offset: 10 };
       await itemsService.findByTrip(mockTrip.id, mockUser.id, filterDto);
@@ -280,17 +331,25 @@ describe('Items-Trip Integration', () => {
 
       // Mock trip access validation
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock item lookup with relations
       itemRepository.findOne.mockResolvedValue(existingItem);
-      
+
       const updatedItem = { ...existingItem, ...updateItemDto };
       itemRepository.preload.mockResolvedValue(updatedItem);
       itemRepository.save.mockResolvedValue(updatedItem);
 
-      const result = await itemsService.updateForTrip('item-uuid', updateItemDto, mockTrip.id, mockUser.id);
+      const result = await itemsService.updateForTrip(
+        'item-uuid',
+        updateItemDto,
+        mockTrip.id,
+        mockUser.id,
+      );
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        mockUser.id,
+      );
       expect(itemRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'item-uuid' },
         relations: { trip: true, createdBy: true },
@@ -314,12 +373,17 @@ describe('Items-Trip Integration', () => {
 
       // Mock trip access validation - user can access current trip
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock item from different trip
       itemRepository.findOne.mockResolvedValue(itemFromOtherTrip);
 
       await expect(
-        itemsService.updateForTrip('item-uuid', updateItemDto, mockTrip.id, mockUser.id)
+        itemsService.updateForTrip(
+          'item-uuid',
+          updateItemDto,
+          mockTrip.id,
+          mockUser.id,
+        ),
       ).rejects.toThrow('Item does not belong to this trip');
 
       expect(itemRepository.preload).not.toHaveBeenCalled();
@@ -338,14 +402,17 @@ describe('Items-Trip Integration', () => {
 
       // Mock trip access validation
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock item lookup
       itemRepository.findOne.mockResolvedValue(itemToRemove);
       itemRepository.remove.mockResolvedValue(itemToRemove);
 
       await itemsService.removeFromTrip('item-uuid', mockTrip.id, mockUser.id);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        mockUser.id,
+      );
       expect(itemRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'item-uuid' },
         relations: { trip: true, createdBy: true },
@@ -364,12 +431,12 @@ describe('Items-Trip Integration', () => {
 
       // Mock trip access validation
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock item from different trip
       itemRepository.findOne.mockResolvedValue(itemFromOtherTrip);
 
       await expect(
-        itemsService.removeFromTrip('item-uuid', mockTrip.id, mockUser.id)
+        itemsService.removeFromTrip('item-uuid', mockTrip.id, mockUser.id),
       ).rejects.toThrow('Item does not belong to this trip');
 
       expect(itemRepository.remove).not.toHaveBeenCalled();
@@ -387,7 +454,9 @@ describe('Items-Trip Integration', () => {
 
       // Mock dependencies
       itemCategoryRepository.findOneBy.mockResolvedValue(mockCategory);
-      jest.spyOn(itemsService['userRepository'], 'findOneBy').mockResolvedValue(creatorUser);
+      jest
+        .spyOn(itemsService['userRepository'], 'findOneBy')
+        .mockResolvedValue(creatorUser);
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
 
       const expectedItem = {
@@ -401,7 +470,11 @@ describe('Items-Trip Integration', () => {
       itemRepository.create.mockReturnValue(expectedItem);
       itemRepository.save.mockResolvedValue(expectedItem);
 
-      const result = await itemsService.createForTrip(mockTrip.id, createItemDto, 'creator-id');
+      const result = await itemsService.createForTrip(
+        mockTrip.id,
+        createItemDto,
+        'creator-id',
+      );
 
       expect(result.createdBy.id).toBe('creator-id');
       expect(itemRepository.create).toHaveBeenCalledWith({

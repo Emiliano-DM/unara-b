@@ -41,40 +41,46 @@ describe('/trips/:id/participants (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-    .overrideProvider(getRepositoryToken(Trip))
-    .useValue({
-      create: jest.fn(),
-      save: jest.fn(),
-      findOne: jest.fn(),
-      createQueryBuilder: jest.fn().mockReturnValue({
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        leftJoin: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn(),
-      }),
-      remove: jest.fn(),
-    })
-    .overrideProvider(getRepositoryToken(TripParticipant))
-    .useValue({
-      create: jest.fn(),
-      save: jest.fn(),
-      findOne: jest.fn(),
-      remove: jest.fn(),
-    })
-    .overrideProvider(getRepositoryToken(User))
-    .useValue({
-      findOne: jest.fn(),
-    })
-    .compile();
+      .overrideProvider(getRepositoryToken(Trip))
+      .useValue({
+        create: jest.fn(),
+        save: jest.fn(),
+        findOne: jest.fn(),
+        createQueryBuilder: jest.fn().mockReturnValue({
+          leftJoinAndSelect: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          andWhere: jest.fn().mockReturnThis(),
+          orderBy: jest.fn().mockReturnThis(),
+          getMany: jest.fn(),
+        }),
+        remove: jest.fn(),
+      })
+      .overrideProvider(getRepositoryToken(TripParticipant))
+      .useValue({
+        create: jest.fn(),
+        save: jest.fn(),
+        findOne: jest.fn(),
+        remove: jest.fn(),
+      })
+      .overrideProvider(getRepositoryToken(User))
+      .useValue({
+        findOne: jest.fn(),
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    tripRepository = moduleFixture.get<Repository<Trip>>(getRepositoryToken(Trip));
-    participantRepository = moduleFixture.get<Repository<TripParticipant>>(getRepositoryToken(TripParticipant));
-    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
+    tripRepository = moduleFixture.get<Repository<Trip>>(
+      getRepositoryToken(Trip),
+    );
+    participantRepository = moduleFixture.get<Repository<TripParticipant>>(
+      getRepositoryToken(TripParticipant),
+    );
+    userRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
 
     // Create test trip
     testTrip = {
@@ -110,13 +116,13 @@ describe('/trips/:id/participants (e2e)', () => {
 
       // Mock finding the trip with owner
       (tripRepository.findOne as jest.Mock).mockResolvedValue(testTrip);
-      
+
       // Mock finding the user to invite
       (userRepository.findOne as jest.Mock).mockResolvedValue(mockParticipant);
-      
+
       // Mock checking if participant already exists
       (participantRepository.findOne as jest.Mock).mockResolvedValue(null);
-      
+
       // Mock creating and saving participant
       const mockTripParticipant = {
         id: 'participant-relation-uuid',
@@ -125,8 +131,12 @@ describe('/trips/:id/participants (e2e)', () => {
         role: 'participant',
         status: 'invited',
       };
-      (participantRepository.create as jest.Mock).mockReturnValue(mockTripParticipant);
-      (participantRepository.save as jest.Mock).mockResolvedValue(mockTripParticipant);
+      (participantRepository.create as jest.Mock).mockReturnValue(
+        mockTripParticipant,
+      );
+      (participantRepository.save as jest.Mock).mockResolvedValue(
+        mockTripParticipant,
+      );
 
       const response = await request(app.getHttpServer())
         .post(`/trips/${testTrip.id}/invite`)
@@ -142,7 +152,9 @@ describe('/trips/:id/participants (e2e)', () => {
         where: { id: testTrip.id },
         relations: ['owner', 'participants', 'participants.user'],
       });
-      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { id: mockParticipant.id } });
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockParticipant.id },
+      });
       expect(participantRepository.create).toHaveBeenCalled();
       expect(participantRepository.save).toHaveBeenCalled();
     });
@@ -156,17 +168,19 @@ describe('/trips/:id/participants (e2e)', () => {
       // Mock trip with admin as current user
       const tripWithAdmin = {
         ...testTrip,
-        participants: [{
-          user: { id: mockAdmin.id },
-          role: 'admin',
-          status: 'joined',
-        }],
+        participants: [
+          {
+            user: { id: mockAdmin.id },
+            role: 'admin',
+            status: 'joined',
+          },
+        ],
       };
 
       (tripRepository.findOne as jest.Mock).mockResolvedValue(tripWithAdmin);
       (userRepository.findOne as jest.Mock).mockResolvedValue(mockParticipant);
       (participantRepository.findOne as jest.Mock).mockResolvedValue(null);
-      
+
       const mockTripParticipant = {
         id: 'participant-relation-uuid',
         trip: testTrip,
@@ -174,8 +188,12 @@ describe('/trips/:id/participants (e2e)', () => {
         role: 'participant',
         status: 'invited',
       };
-      (participantRepository.create as jest.Mock).mockReturnValue(mockTripParticipant);
-      (participantRepository.save as jest.Mock).mockResolvedValue(mockTripParticipant);
+      (participantRepository.create as jest.Mock).mockReturnValue(
+        mockTripParticipant,
+      );
+      (participantRepository.save as jest.Mock).mockResolvedValue(
+        mockTripParticipant,
+      );
 
       await request(app.getHttpServer())
         .post(`/trips/${testTrip.id}/invite`)
@@ -193,14 +211,18 @@ describe('/trips/:id/participants (e2e)', () => {
       const tripWithParticipant = {
         ...testTrip,
         owner: { id: 'other-owner' },
-        participants: [{
-          user: { id: 'regular-participant' },
-          role: 'participant',
-          status: 'joined',
-        }],
+        participants: [
+          {
+            user: { id: 'regular-participant' },
+            role: 'participant',
+            status: 'joined',
+          },
+        ],
       };
 
-      (tripRepository.findOne as jest.Mock).mockResolvedValue(tripWithParticipant);
+      (tripRepository.findOne as jest.Mock).mockResolvedValue(
+        tripWithParticipant,
+      );
 
       await request(app.getHttpServer())
         .post(`/trips/${testTrip.id}/invite`)
@@ -216,7 +238,7 @@ describe('/trips/:id/participants (e2e)', () => {
 
       (tripRepository.findOne as jest.Mock).mockResolvedValue(testTrip);
       (userRepository.findOne as jest.Mock).mockResolvedValue(mockParticipant);
-      
+
       // Mock that participant already exists
       (participantRepository.findOne as jest.Mock).mockResolvedValue({
         id: 'existing-participant',
@@ -265,7 +287,7 @@ describe('/trips/:id/participants (e2e)', () => {
       (tripRepository.findOne as jest.Mock).mockResolvedValue(publicTrip);
       (userRepository.findOne as jest.Mock).mockResolvedValue(mockParticipant);
       (participantRepository.findOne as jest.Mock).mockResolvedValue(null);
-      
+
       const mockTripParticipant = {
         id: 'new-participant-uuid',
         trip: publicTrip,
@@ -273,8 +295,12 @@ describe('/trips/:id/participants (e2e)', () => {
         role: 'participant',
         status: 'joined',
       };
-      (participantRepository.create as jest.Mock).mockReturnValue(mockTripParticipant);
-      (participantRepository.save as jest.Mock).mockResolvedValue(mockTripParticipant);
+      (participantRepository.create as jest.Mock).mockReturnValue(
+        mockTripParticipant,
+      );
+      (participantRepository.save as jest.Mock).mockResolvedValue(
+        mockTripParticipant,
+      );
 
       const response = await request(app.getHttpServer())
         .post(`/trips/${testTrip.id}/join`)
@@ -290,16 +316,20 @@ describe('/trips/:id/participants (e2e)', () => {
       const tripWithInvitation = {
         ...testTrip,
         isPublic: false,
-        participants: [{
-          user: { id: mockParticipant.id },
-          status: 'invited',
-          role: 'participant',
-        }],
+        participants: [
+          {
+            user: { id: mockParticipant.id },
+            status: 'invited',
+            role: 'participant',
+          },
+        ],
       };
 
-      (tripRepository.findOne as jest.Mock).mockResolvedValue(tripWithInvitation);
+      (tripRepository.findOne as jest.Mock).mockResolvedValue(
+        tripWithInvitation,
+      );
       (userRepository.findOne as jest.Mock).mockResolvedValue(mockParticipant);
-      
+
       // Mock finding existing invitation
       const existingInvitation = {
         id: 'invitation-uuid',
@@ -308,11 +338,15 @@ describe('/trips/:id/participants (e2e)', () => {
         role: 'participant',
         status: 'invited',
       };
-      (participantRepository.findOne as jest.Mock).mockResolvedValue(existingInvitation);
-      
+      (participantRepository.findOne as jest.Mock).mockResolvedValue(
+        existingInvitation,
+      );
+
       // Mock updating invitation to joined
       const joinedParticipant = { ...existingInvitation, status: 'joined' };
-      (participantRepository.save as jest.Mock).mockResolvedValue(joinedParticipant);
+      (participantRepository.save as jest.Mock).mockResolvedValue(
+        joinedParticipant,
+      );
 
       const response = await request(app.getHttpServer())
         .post(`/trips/${testTrip.id}/join`)
@@ -342,13 +376,17 @@ describe('/trips/:id/participants (e2e)', () => {
     it('should fail when user is already a joined participant', async () => {
       const tripWithJoinedUser = {
         ...testTrip,
-        participants: [{
-          user: { id: mockParticipant.id },
-          status: 'joined',
-        }],
+        participants: [
+          {
+            user: { id: mockParticipant.id },
+            status: 'joined',
+          },
+        ],
       };
 
-      (tripRepository.findOne as jest.Mock).mockResolvedValue(tripWithJoinedUser);
+      (tripRepository.findOne as jest.Mock).mockResolvedValue(
+        tripWithJoinedUser,
+      );
       (userRepository.findOne as jest.Mock).mockResolvedValue(mockParticipant);
       (participantRepository.findOne as jest.Mock).mockResolvedValue({
         status: 'joined',
@@ -364,22 +402,28 @@ describe('/trips/:id/participants (e2e)', () => {
     it('should allow participant to leave trip', async () => {
       const tripWithParticipant = {
         ...testTrip,
-        participants: [{
-          user: { id: mockParticipant.id },
-          status: 'joined',
-          role: 'participant',
-        }],
+        participants: [
+          {
+            user: { id: mockParticipant.id },
+            status: 'joined',
+            role: 'participant',
+          },
+        ],
       };
 
-      (tripRepository.findOne as jest.Mock).mockResolvedValue(tripWithParticipant);
-      
+      (tripRepository.findOne as jest.Mock).mockResolvedValue(
+        tripWithParticipant,
+      );
+
       const participantToRemove = {
         id: 'participant-to-remove',
         trip: tripWithParticipant,
         user: mockParticipant,
         status: 'joined',
       };
-      (participantRepository.findOne as jest.Mock).mockResolvedValue(participantToRemove);
+      (participantRepository.findOne as jest.Mock).mockResolvedValue(
+        participantToRemove,
+      );
       (participantRepository.remove as jest.Mock).mockResolvedValue(undefined);
 
       await request(app.getHttpServer())
@@ -390,7 +434,9 @@ describe('/trips/:id/participants (e2e)', () => {
         where: { trip: { id: testTrip.id }, user: { id: mockParticipant.id } },
         relations: ['trip', 'user'],
       });
-      expect(participantRepository.remove).toHaveBeenCalledWith(participantToRemove);
+      expect(participantRepository.remove).toHaveBeenCalledWith(
+        participantToRemove,
+      );
     });
 
     it('should fail when owner tries to leave (must transfer ownership first)', async () => {
@@ -423,15 +469,19 @@ describe('/trips/:id/participants (e2e)', () => {
       const tripWithParticipants = {
         ...testTrip,
         owner: { id: mockOwner.id },
-        participants: [{
-          user: { id: mockParticipant.id },
-          role: 'participant',
-          status: 'joined',
-        }],
+        participants: [
+          {
+            user: { id: mockParticipant.id },
+            role: 'participant',
+            status: 'joined',
+          },
+        ],
       };
 
-      (tripRepository.findOne as jest.Mock).mockResolvedValue(tripWithParticipants);
-      
+      (tripRepository.findOne as jest.Mock).mockResolvedValue(
+        tripWithParticipants,
+      );
+
       const participantToUpdate = {
         id: 'participant-to-update',
         trip: tripWithParticipants,
@@ -439,10 +489,14 @@ describe('/trips/:id/participants (e2e)', () => {
         role: 'participant',
         status: 'joined',
       };
-      (participantRepository.findOne as jest.Mock).mockResolvedValue(participantToUpdate);
-      
+      (participantRepository.findOne as jest.Mock).mockResolvedValue(
+        participantToUpdate,
+      );
+
       const updatedParticipant = { ...participantToUpdate, role: 'admin' };
-      (participantRepository.save as jest.Mock).mockResolvedValue(updatedParticipant);
+      (participantRepository.save as jest.Mock).mockResolvedValue(
+        updatedParticipant,
+      );
 
       const response = await request(app.getHttpServer())
         .patch(`/trips/${testTrip.id}/participants/${mockParticipant.id}/role`)

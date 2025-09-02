@@ -6,7 +6,11 @@ import { TripsService } from '../../src/trips/trips.service';
 import { Trip } from '../../src/trips/entities/trip.entity';
 import { TripParticipant } from '../../src/trips/entities/trip-participant.entity';
 import { User } from '../../src/users/entities/user.entity';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 
 describe('Participant Edge Cases and Regression Tests', () => {
   let service: TripsService;
@@ -103,21 +107,23 @@ describe('Participant Edge Cases and Regression Tests', () => {
   describe('inviteParticipant edge cases', () => {
     it('should prevent inviting non-existent user', async () => {
       const inviteDto = { userId: 'non-existent-user', role: 'participant' };
-      
+
       tripRepository.findOne.mockResolvedValue(mockTrip);
       userRepository.findOne.mockResolvedValueOnce(mockOwner); // For permission check
       userRepository.findOne.mockResolvedValueOnce(null); // User to invite doesn't exist
-      
+
       await expect(
-        service.inviteParticipant('trip-uuid', inviteDto, mockOwner.id)
+        service.inviteParticipant('trip-uuid', inviteDto, mockOwner.id),
       ).rejects.toThrow(NotFoundException);
-      
-      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { id: 'non-existent-user' } });
+
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'non-existent-user' },
+      });
     });
 
     it('should prevent self-invitation by owner', async () => {
       const inviteDto = { userId: mockOwner.id, role: 'participant' };
-      
+
       tripRepository.findOne.mockResolvedValue(mockTrip);
       userRepository.findOne.mockResolvedValue(mockOwner);
       participantRepository.findOne.mockResolvedValue({
@@ -125,26 +131,26 @@ describe('Participant Edge Cases and Regression Tests', () => {
         role: 'owner',
         status: 'joined',
       } as TripParticipant);
-      
+
       await expect(
-        service.inviteParticipant('trip-uuid', inviteDto, mockOwner.id)
+        service.inviteParticipant('trip-uuid', inviteDto, mockOwner.id),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should allow re-inviting user who left the trip', async () => {
       const inviteDto = { userId: mockUser.id, role: 'participant' };
-      
+
       tripRepository.findOne.mockResolvedValue(mockTrip);
       userRepository.findOne.mockResolvedValueOnce(mockOwner); // Inviter
       userRepository.findOne.mockResolvedValueOnce(mockUser); // User to invite
-      
+
       // Mock user who previously left
       participantRepository.findOne.mockResolvedValue({
         id: 'left-participant',
         status: 'left',
         role: 'participant',
       } as TripParticipant);
-      
+
       const newParticipant = {
         id: 'new-invitation',
         trip: mockTrip,
@@ -152,12 +158,16 @@ describe('Participant Edge Cases and Regression Tests', () => {
         role: 'participant',
         status: 'invited',
       } as TripParticipant;
-      
+
       participantRepository.create.mockReturnValue(newParticipant);
       participantRepository.save.mockResolvedValue(newParticipant);
-      
-      const result = await service.inviteParticipant('trip-uuid', inviteDto, mockOwner.id);
-      
+
+      const result = await service.inviteParticipant(
+        'trip-uuid',
+        inviteDto,
+        mockOwner.id,
+      );
+
       expect(result).toEqual(newParticipant);
       expect(participantRepository.create).toHaveBeenCalled();
     });
@@ -165,30 +175,40 @@ describe('Participant Edge Cases and Regression Tests', () => {
     it('should prevent regular participant from inviting others', async () => {
       const tripWithParticipant = {
         ...mockTrip,
-        participants: [{
-          user: { id: 'regular-participant-id' },
-          role: 'participant',
-          status: 'joined',
-        }],
+        participants: [
+          {
+            user: { id: 'regular-participant-id' },
+            role: 'participant',
+            status: 'joined',
+          },
+        ],
       } as Trip;
-      
+
       const inviteDto = { userId: mockUser.id, role: 'participant' };
-      
+
       tripRepository.findOne.mockResolvedValue(tripWithParticipant);
-      
+
       await expect(
-        service.inviteParticipant('trip-uuid', inviteDto, 'regular-participant-id')
+        service.inviteParticipant(
+          'trip-uuid',
+          inviteDto,
+          'regular-participant-id',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('joinTrip edge cases', () => {
     it('should handle joining public trip when user already has "left" status', async () => {
-      const publicTrip = { ...mockTrip, isPublic: true, generateShareToken: jest.fn() };
-      
+      const publicTrip = {
+        ...mockTrip,
+        isPublic: true,
+        generateShareToken: jest.fn(),
+      };
+
       tripRepository.findOne.mockResolvedValue(publicTrip);
       userRepository.findOne.mockResolvedValue(mockUser);
-      
+
       // Mock existing "left" participation
       const leftParticipant = {
         id: 'left-participant',
@@ -200,20 +220,20 @@ describe('Participant Edge Cases and Regression Tests', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       } as TripParticipant;
-      
+
       participantRepository.findOne.mockResolvedValue(leftParticipant);
-      
+
       const newParticipant = {
         ...leftParticipant,
         status: 'joined',
         joinedAt: new Date(),
       };
-      
+
       participantRepository.create.mockReturnValue(newParticipant);
       participantRepository.save.mockResolvedValue(newParticipant);
-      
+
       const result = await service.joinTrip('trip-uuid', mockUser.id);
-      
+
       expect(participantRepository.create).toHaveBeenCalledWith({
         trip: publicTrip,
         user: mockUser,
@@ -225,25 +245,25 @@ describe('Participant Edge Cases and Regression Tests', () => {
 
     it('should prevent joining non-existent trip', async () => {
       tripRepository.findOne.mockResolvedValue(null);
-      
+
       await expect(
-        service.joinTrip('non-existent-trip', mockUser.id)
+        service.joinTrip('non-existent-trip', mockUser.id),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should prevent non-existent user from joining', async () => {
       tripRepository.findOne.mockResolvedValue(mockTrip);
       userRepository.findOne.mockResolvedValue(null);
-      
+
       await expect(
-        service.joinTrip('trip-uuid', 'non-existent-user')
+        service.joinTrip('trip-uuid', 'non-existent-user'),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should handle invitation update correctly', async () => {
       tripRepository.findOne.mockResolvedValue(mockTrip);
       userRepository.findOne.mockResolvedValue(mockUser);
-      
+
       const invitedParticipant = {
         id: 'invited-participant',
         trip: mockTrip,
@@ -251,19 +271,19 @@ describe('Participant Edge Cases and Regression Tests', () => {
         role: 'participant',
         status: 'invited',
       } as TripParticipant;
-      
+
       participantRepository.findOne.mockResolvedValue(invitedParticipant);
-      
+
       const joinedParticipant = {
         ...invitedParticipant,
         status: 'joined',
         joinedAt: new Date(),
       };
-      
+
       participantRepository.save.mockResolvedValue(joinedParticipant);
-      
+
       const result = await service.joinTrip('trip-uuid', mockUser.id);
-      
+
       expect(result.status).toBe('joined');
       expect(result.joinedAt).toBeDefined();
       expect(participantRepository.save).toHaveBeenCalledWith({
@@ -276,14 +296,18 @@ describe('Participant Edge Cases and Regression Tests', () => {
 
   describe('leaveTrip edge cases', () => {
     it('should prevent owner from leaving trip directly', async () => {
-      const ownerTrip = { ...mockTrip, owner: mockOwner, generateShareToken: jest.fn() };
-      
+      const ownerTrip = {
+        ...mockTrip,
+        owner: mockOwner,
+        generateShareToken: jest.fn(),
+      };
+
       tripRepository.findOne.mockResolvedValue(ownerTrip);
-      
+
       await expect(
-        service.leaveTrip('trip-uuid', mockOwner.id)
+        service.leaveTrip('trip-uuid', mockOwner.id),
       ).rejects.toThrow(ForbiddenException);
-      
+
       expect(tripRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'trip-uuid' },
         relations: ['owner'],
@@ -292,24 +316,24 @@ describe('Participant Edge Cases and Regression Tests', () => {
 
     it('should handle leaving non-existent trip', async () => {
       tripRepository.findOne.mockResolvedValue(null);
-      
+
       await expect(
-        service.leaveTrip('non-existent-trip', mockUser.id)
+        service.leaveTrip('non-existent-trip', mockUser.id),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should handle user not being a participant', async () => {
       tripRepository.findOne.mockResolvedValue(mockTrip);
       participantRepository.findOne.mockResolvedValue(null);
-      
+
       await expect(
-        service.leaveTrip('trip-uuid', 'non-participant-user')
+        service.leaveTrip('trip-uuid', 'non-participant-user'),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should completely remove participant record on leave', async () => {
       tripRepository.findOne.mockResolvedValue(mockTrip);
-      
+
       const participantToRemove = {
         id: 'participant-to-remove',
         trip: mockTrip,
@@ -317,62 +341,79 @@ describe('Participant Edge Cases and Regression Tests', () => {
         role: 'participant',
         status: 'joined',
       } as TripParticipant;
-      
+
       participantRepository.findOne.mockResolvedValue(participantToRemove);
       participantRepository.remove.mockResolvedValue(undefined);
-      
+
       await service.leaveTrip('trip-uuid', mockUser.id);
-      
-      expect(participantRepository.remove).toHaveBeenCalledWith(participantToRemove);
+
+      expect(participantRepository.remove).toHaveBeenCalledWith(
+        participantToRemove,
+      );
       expect(participantRepository.save).not.toHaveBeenCalled();
     });
   });
 
   describe('updateParticipantRole edge cases', () => {
     it('should prevent non-owner from updating roles', async () => {
-      const tripWithNonOwner = { 
-        ...mockTrip, 
+      const tripWithNonOwner = {
+        ...mockTrip,
         owner: { ...mockOwner, id: 'different-owner' },
         participants: [],
         generateShareToken: jest.fn(),
       };
-      
+
       tripRepository.findOne.mockResolvedValue(tripWithNonOwner);
-      
+
       await expect(
-        service.updateParticipantRole('trip-uuid', mockUser.id, { role: 'admin' }, 'non-owner-user')
+        service.updateParticipantRole(
+          'trip-uuid',
+          mockUser.id,
+          { role: 'admin' },
+          'non-owner-user',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
     it('should prevent updating role of non-existent participant', async () => {
       tripRepository.findOne.mockResolvedValue(mockTrip);
       participantRepository.findOne.mockResolvedValue(null);
-      
+
       await expect(
-        service.updateParticipantRole('trip-uuid', 'non-existent-participant', { role: 'admin' }, mockOwner.id)
+        service.updateParticipantRole(
+          'trip-uuid',
+          'non-existent-participant',
+          { role: 'admin' },
+          mockOwner.id,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should prevent changing owner role', async () => {
       tripRepository.findOne.mockResolvedValue(mockTrip);
-      
+
       const ownerParticipant = {
         id: 'owner-participant',
         role: 'owner',
         user: mockOwner,
         trip: mockTrip,
       } as TripParticipant;
-      
+
       participantRepository.findOne.mockResolvedValue(ownerParticipant);
-      
+
       await expect(
-        service.updateParticipantRole('trip-uuid', mockOwner.id, { role: 'admin' }, mockOwner.id)
+        service.updateParticipantRole(
+          'trip-uuid',
+          mockOwner.id,
+          { role: 'admin' },
+          mockOwner.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
     it('should successfully update participant role from participant to admin', async () => {
       tripRepository.findOne.mockResolvedValue(mockTrip);
-      
+
       const participantToUpdate = {
         id: 'participant-to-update',
         role: 'participant',
@@ -380,14 +421,19 @@ describe('Participant Edge Cases and Regression Tests', () => {
         trip: mockTrip,
         status: 'joined',
       } as TripParticipant;
-      
+
       participantRepository.findOne.mockResolvedValue(participantToUpdate);
-      
+
       const updatedParticipant = { ...participantToUpdate, role: 'admin' };
       participantRepository.save.mockResolvedValue(updatedParticipant);
-      
-      const result = await service.updateParticipantRole('trip-uuid', mockUser.id, { role: 'admin' }, mockOwner.id);
-      
+
+      const result = await service.updateParticipantRole(
+        'trip-uuid',
+        mockUser.id,
+        { role: 'admin' },
+        mockOwner.id,
+      );
+
       expect(result.role).toBe('admin');
       expect(participantRepository.save).toHaveBeenCalledWith({
         ...participantToUpdate,
@@ -404,7 +450,7 @@ describe('Participant Edge Cases and Regression Tests', () => {
         participants: [],
         generateShareToken: jest.fn(),
       });
-      
+
       const result = await service.findOne('trip-uuid', mockOwner.id);
       expect(result).toBeDefined();
     });
@@ -412,14 +458,16 @@ describe('Participant Edge Cases and Regression Tests', () => {
     it('should allow joined participant to access trip', async () => {
       const tripWithParticipant = {
         ...mockTrip,
-        participants: [{
-          user: { id: mockUser.id },
-          status: 'joined',
-        }],
+        participants: [
+          {
+            user: { id: mockUser.id },
+            status: 'joined',
+          },
+        ],
       } as Trip;
-      
+
       tripRepository.findOne.mockResolvedValue(tripWithParticipant);
-      
+
       const result = await service.findOne('trip-uuid', mockUser.id);
       expect(result).toBeDefined();
     });
@@ -427,44 +475,48 @@ describe('Participant Edge Cases and Regression Tests', () => {
     it('should deny access to invited but not joined participant', async () => {
       const tripWithInvitedUser = {
         ...mockTrip,
-        participants: [{
-          user: { id: mockUser.id },
-          status: 'invited',
-        }],
+        participants: [
+          {
+            user: { id: mockUser.id },
+            status: 'invited',
+          },
+        ],
       } as Trip;
-      
+
       tripRepository.findOne.mockResolvedValue(tripWithInvitedUser);
-      
-      await expect(
-        service.findOne('trip-uuid', mockUser.id)
-      ).rejects.toThrow(ForbiddenException);
+
+      await expect(service.findOne('trip-uuid', mockUser.id)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should deny access to user who left the trip', async () => {
       const tripWithLeftUser = {
         ...mockTrip,
-        participants: [{
-          user: { id: mockUser.id },
-          status: 'left',
-        }],
+        participants: [
+          {
+            user: { id: mockUser.id },
+            status: 'left',
+          },
+        ],
       } as Trip;
-      
+
       tripRepository.findOne.mockResolvedValue(tripWithLeftUser);
-      
-      await expect(
-        service.findOne('trip-uuid', mockUser.id)
-      ).rejects.toThrow(ForbiddenException);
+
+      await expect(service.findOne('trip-uuid', mockUser.id)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
   describe('concurrent operations safety', () => {
     it('should handle concurrent invitation attempts gracefully', async () => {
       const inviteDto = { userId: mockUser.id, role: 'participant' };
-      
+
       tripRepository.findOne.mockResolvedValue(mockTrip);
       userRepository.findOne.mockResolvedValue(mockOwner);
       userRepository.findOne.mockResolvedValue(mockUser);
-      
+
       // First call returns null (no existing participant)
       // Second call might return existing participant due to race condition
       participantRepository.findOne
@@ -473,7 +525,7 @@ describe('Participant Edge Cases and Regression Tests', () => {
           id: 'existing-participant',
           status: 'invited',
         } as TripParticipant);
-      
+
       const newParticipant = {
         id: 'new-participant',
         trip: mockTrip,
@@ -481,12 +533,16 @@ describe('Participant Edge Cases and Regression Tests', () => {
         role: 'participant',
         status: 'invited',
       } as TripParticipant;
-      
+
       participantRepository.create.mockReturnValue(newParticipant);
       participantRepository.save.mockResolvedValue(newParticipant);
-      
+
       // Should handle the race condition by checking again
-      const result = await service.inviteParticipant('trip-uuid', inviteDto, mockOwner.id);
+      const result = await service.inviteParticipant(
+        'trip-uuid',
+        inviteDto,
+        mockOwner.id,
+      );
       expect(result).toBeDefined();
     });
   });
@@ -494,7 +550,7 @@ describe('Participant Edge Cases and Regression Tests', () => {
   describe('data consistency checks', () => {
     it('should maintain referential integrity when removing participants', async () => {
       tripRepository.findOne.mockResolvedValue(mockTrip);
-      
+
       const participantWithRelations = {
         id: 'participant-with-relations',
         trip: mockTrip,
@@ -502,21 +558,27 @@ describe('Participant Edge Cases and Regression Tests', () => {
         role: 'participant',
         status: 'joined',
       } as TripParticipant;
-      
+
       participantRepository.findOne.mockResolvedValue(participantWithRelations);
       participantRepository.remove.mockResolvedValue(undefined);
-      
+
       await service.leaveTrip('trip-uuid', mockUser.id);
-      
+
       // Verify that remove was called with the complete participant object
-      expect(participantRepository.remove).toHaveBeenCalledWith(participantWithRelations);
+      expect(participantRepository.remove).toHaveBeenCalledWith(
+        participantWithRelations,
+      );
     });
 
     it('should verify trip exists before participant operations', async () => {
       tripRepository.findOne.mockResolvedValue(null);
-      
+
       await expect(
-        service.inviteParticipant('non-existent-trip', { userId: mockUser.id, role: 'participant' }, mockOwner.id)
+        service.inviteParticipant(
+          'non-existent-trip',
+          { userId: mockUser.id, role: 'participant' },
+          mockOwner.id,
+        ),
       ).rejects.toThrow();
     });
   });

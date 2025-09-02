@@ -24,7 +24,7 @@ describe('TripsController (e2e)', () => {
 
     // Create test users
     const userRepository = dataSource.getRepository(User);
-    
+
     testUser = userRepository.create({
       fullname: 'Test User 1',
       email: 'test1@example.com',
@@ -94,12 +94,10 @@ describe('TripsController (e2e)', () => {
 
     beforeEach(async () => {
       // Create a test trip
-      const response = await request(app.getHttpServer())
-        .post('/trips')
-        .send({
-          name: 'Test Trip',
-          description: 'Test Description',
-        });
+      const response = await request(app.getHttpServer()).post('/trips').send({
+        name: 'Test Trip',
+        description: 'Test Description',
+      });
       testTrip = response.body;
     });
 
@@ -129,12 +127,10 @@ describe('TripsController (e2e)', () => {
     let testTrip: any;
 
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/trips')
-        .send({
-          name: 'Test Trip',
-          description: 'Test Description',
-        });
+      const response = await request(app.getHttpServer()).post('/trips').send({
+        name: 'Test Trip',
+        description: 'Test Description',
+      });
       testTrip = response.body;
     });
 
@@ -152,9 +148,7 @@ describe('TripsController (e2e)', () => {
 
     it('should return 404 for non-existent trip', () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000';
-      return request(app.getHttpServer())
-        .get(`/trips/${fakeId}`)
-        .expect(404);
+      return request(app.getHttpServer()).get(`/trips/${fakeId}`).expect(404);
     });
   });
 
@@ -162,12 +156,10 @@ describe('TripsController (e2e)', () => {
     let testTrip: any;
 
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/trips')
-        .send({
-          name: 'Test Trip',
-          description: 'Test Description',
-        });
+      const response = await request(app.getHttpServer()).post('/trips').send({
+        name: 'Test Trip',
+        description: 'Test Description',
+      });
       testTrip = response.body;
     });
 
@@ -192,11 +184,9 @@ describe('TripsController (e2e)', () => {
     let testTrip: any;
 
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/trips')
-        .send({
-          name: 'Trip to Delete',
-        });
+      const response = await request(app.getHttpServer()).post('/trips').send({
+        name: 'Trip to Delete',
+      });
       testTrip = response.body;
     });
 
@@ -211,12 +201,10 @@ describe('TripsController (e2e)', () => {
     let testTrip: any;
 
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/trips')
-        .send({
-          name: 'Public Trip',
-          isPublic: true,
-        });
+      const response = await request(app.getHttpServer()).post('/trips').send({
+        name: 'Public Trip',
+        isPublic: true,
+      });
       testTrip = response.body;
     });
 

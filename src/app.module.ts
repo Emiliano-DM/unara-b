@@ -15,21 +15,25 @@ import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    
+
     // Rate limiting configuration
-    ThrottlerModule.forRoot([{
-      name: 'short',
-      ttl: 1000, // 1 second
-      limit: 3, // max 3 requests per second
-    }, {
-      name: 'medium',
-      ttl: 10000, // 10 seconds
-      limit: 20, // max 20 requests per 10 seconds
-    }, {
-      name: 'long', 
-      ttl: 60000, // 60 seconds
-      limit: 100, // max 100 requests per minute
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000, // 1 second
+        limit: 3, // max 3 requests per second
+      },
+      {
+        name: 'medium',
+        ttl: 10000, // 10 seconds
+        limit: 20, // max 20 requests per 10 seconds
+      },
+      {
+        name: 'long',
+        ttl: 60000, // 60 seconds
+        limit: 100, // max 100 requests per minute
+      },
+    ]),
 
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -39,7 +43,7 @@ import { AuthModule } from './auth/auth.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: false, // Temporarily disabled to fix null username issue
       migrationsRun: process.env.NODE_ENV === 'production',
       migrations: ['dist/database/migrations/*.js'],
     }),

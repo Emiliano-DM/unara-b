@@ -1,4 +1,10 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LuggageCategory } from 'src/luggage-categories/entities/luggage-category.entity';
@@ -11,9 +17,8 @@ import { User } from '../../users/entities/user.entity';
 
 @Injectable()
 export class LuggageService {
-
   private readonly logger = new Logger('LuggageService');
-  
+
   constructor(
     @InjectRepository(Luggage)
     private readonly luggageRepository: Repository<Luggage>,
@@ -31,7 +36,9 @@ export class LuggageService {
     try {
       const { categoryId, ...luggageData } = createLuggageDto;
 
-      const category = await this.luggageCategoryRepository.findOneBy({ id: categoryId });
+      const category = await this.luggageCategoryRepository.findOneBy({
+        id: categoryId,
+      });
 
       if (!category) {
         throw new NotFoundException(`Category with id ${categoryId} not found`);
@@ -41,7 +48,7 @@ export class LuggageService {
         ...luggageData,
         category,
       });
-      
+
       await this.luggageRepository.save(luggage);
       return luggage;
     } catch (error) {
@@ -50,21 +57,16 @@ export class LuggageService {
   }
 
   async findAll(filterLuggageDto: FilterLuggageDto): Promise<Luggage[]> {
-    const { 
-      limit = 10, 
-      offset = 0,
-      name,
-      categoryId,
-    } = filterLuggageDto;
+    const { limit = 10, offset = 0, name, categoryId } = filterLuggageDto;
 
     const query = this.luggageRepository
-                    .createQueryBuilder('luggage')
-                    .leftJoinAndSelect('luggage.category', 'category');
+      .createQueryBuilder('luggage')
+      .leftJoinAndSelect('luggage.category', 'category');
 
     if (name) {
       query.andWhere('luggage.name ILIKE :name', { name: `%${name}%` });
     }
-    
+
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });
     }
@@ -87,12 +89,17 @@ export class LuggageService {
     return luggage;
   }
 
-  async update(id: string, updateLuggageDto: UpdateLuggageDto): Promise<Luggage> {
+  async update(
+    id: string,
+    updateLuggageDto: UpdateLuggageDto,
+  ): Promise<Luggage> {
     const { categoryId, ...luggageData } = updateLuggageDto;
 
     let category: LuggageCategory | null = null;
     if (categoryId) {
-      category = await this.luggageCategoryRepository.findOneBy({ id: categoryId });
+      category = await this.luggageCategoryRepository.findOneBy({
+        id: categoryId,
+      });
 
       if (!category) {
         throw new NotFoundException(`Category with id ${categoryId} not found`);
@@ -127,14 +134,20 @@ export class LuggageService {
     await this.luggageRepository.remove(luggage);
   }
 
-  async createForTrip(tripId: string, createLuggageDto: CreateLuggageDto, userId: string): Promise<Luggage> {
+  async createForTrip(
+    tripId: string,
+    createLuggageDto: CreateLuggageDto,
+    userId: string,
+  ): Promise<Luggage> {
     try {
       // Validate user has access to the trip
       const trip = await this.tripsService.findOne(tripId, userId);
 
       const { categoryId, ...luggageData } = createLuggageDto;
 
-      const category = await this.luggageCategoryRepository.findOneBy({ id: categoryId });
+      const category = await this.luggageCategoryRepository.findOneBy({
+        id: categoryId,
+      });
       if (!category) {
         throw new NotFoundException(`Category with id ${categoryId} not found`);
       }
@@ -150,37 +163,35 @@ export class LuggageService {
         trip,
         user,
       });
-      
+
       await this.luggageRepository.save(luggage);
       return luggage;
-
     } catch (error) {
       this.handleExceptions(error);
     }
   }
 
-  async findByTrip(tripId: string, userId: string, filterDto?: FilterLuggageDto): Promise<Luggage[]> {
+  async findByTrip(
+    tripId: string,
+    userId: string,
+    filterDto?: FilterLuggageDto,
+  ): Promise<Luggage[]> {
     // Validate user has access to the trip
     await this.tripsService.findOne(tripId, userId);
 
-    const { 
-      limit = 10, 
-      offset = 0,
-      name,
-      categoryId,
-    } = filterDto || {};
+    const { limit = 10, offset = 0, name, categoryId } = filterDto || {};
 
     const query = this.luggageRepository
-                    .createQueryBuilder('luggage')
-                    .leftJoinAndSelect('luggage.category', 'category')
-                    .leftJoinAndSelect('luggage.trip', 'trip')
-                    .leftJoinAndSelect('luggage.user', 'user')
-                    .andWhere('trip.id = :tripId', { tripId });
+      .createQueryBuilder('luggage')
+      .leftJoinAndSelect('luggage.category', 'category')
+      .leftJoinAndSelect('luggage.trip', 'trip')
+      .leftJoinAndSelect('luggage.user', 'user')
+      .andWhere('trip.id = :tripId', { tripId });
 
     if (name) {
       query.andWhere('luggage.name ILIKE :name', { name: `%${name}%` });
     }
-    
+
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });
     }
@@ -190,7 +201,12 @@ export class LuggageService {
     return query.getMany();
   }
 
-  async updateForTrip(luggageId: string, updateLuggageDto: UpdateLuggageDto, tripId: string, userId: string): Promise<Luggage> {
+  async updateForTrip(
+    luggageId: string,
+    updateLuggageDto: UpdateLuggageDto,
+    tripId: string,
+    userId: string,
+  ): Promise<Luggage> {
     // Validate user has access to the trip
     await this.tripsService.findOne(tripId, userId);
 
@@ -213,7 +229,9 @@ export class LuggageService {
 
     let category: LuggageCategory | null = null;
     if (categoryId) {
-      category = await this.luggageCategoryRepository.findOneBy({ id: categoryId });
+      category = await this.luggageCategoryRepository.findOneBy({
+        id: categoryId,
+      });
       if (!category) {
         throw new NotFoundException(`Category with id ${categoryId} not found`);
       }
@@ -237,7 +255,11 @@ export class LuggageService {
     }
   }
 
-  async removeFromTrip(luggageId: string, tripId: string, userId: string): Promise<void> {
+  async removeFromTrip(
+    luggageId: string,
+    tripId: string,
+    userId: string,
+  ): Promise<void> {
     // Validate user has access to the trip
     await this.tripsService.findOne(tripId, userId);
 
@@ -265,6 +287,8 @@ export class LuggageService {
 
     this.logger.error(error);
 
-    throw new InternalServerErrorException('Unexpected error, check server logs');
+    throw new InternalServerErrorException(
+      'Unexpected error, check server logs',
+    );
   }
 }

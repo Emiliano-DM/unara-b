@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, Index, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  Index,
+  TableIndex,
+} from 'typeorm';
 
 export class CreateTripTable1703000001000 implements MigrationInterface {
   name = 'CreateTripTable1703000001000';
@@ -80,20 +86,29 @@ export class CreateTripTable1703000001000 implements MigrationInterface {
     );
 
     // Create indexes for performance
-    await queryRunner.createIndex('trip', new TableIndex({
-      name: 'IDX_TRIP_OWNER_ID',
-      columnNames: ['ownerId'],
-    }));
-    
-    await queryRunner.createIndex('trip', new TableIndex({
-      name: 'IDX_TRIP_SHARE_TOKEN',
-      columnNames: ['shareToken'],
-    }));
-    
-    await queryRunner.createIndex('trip', new TableIndex({
-      name: 'IDX_TRIP_STATUS',
-      columnNames: ['status'],
-    }));
+    await queryRunner.createIndex(
+      'trip',
+      new TableIndex({
+        name: 'IDX_TRIP_OWNER_ID',
+        columnNames: ['ownerId'],
+      }),
+    );
+
+    await queryRunner.createIndex(
+      'trip',
+      new TableIndex({
+        name: 'IDX_TRIP_SHARE_TOKEN',
+        columnNames: ['shareToken'],
+      }),
+    );
+
+    await queryRunner.createIndex(
+      'trip',
+      new TableIndex({
+        name: 'IDX_TRIP_STATUS',
+        columnNames: ['status'],
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

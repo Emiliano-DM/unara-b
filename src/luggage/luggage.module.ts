@@ -12,20 +12,10 @@ import { User } from '../users/entities/user.entity';
 import { TripsModule } from '../trips/trips.module';
 
 @Module({
-  controllers: [
-    LuggageController,
-    LuggageItemsController,
-  ],
-  providers: [
-    LuggageService,
-    LuggageItemsService,
-  ],
+  controllers: [LuggageController, LuggageItemsController],
+  providers: [LuggageService, LuggageItemsService],
   imports: [
-    TypeOrmModule.forFeature([ 
-      Luggage,
-      LuggageItem,
-      User
-    ]),
+    TypeOrmModule.forFeature([Luggage, LuggageItem, User]),
     LuggageCategoriesModule,
     ItemsModule,
     forwardRef(() => TripsModule),

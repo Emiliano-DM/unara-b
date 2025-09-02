@@ -220,7 +220,9 @@ describe('Luggage Capacity and Status Management', () => {
       };
 
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      luggageCategoryRepository.findOneBy.mockResolvedValue(mockLuggageCategory);
+      luggageCategoryRepository.findOneBy.mockResolvedValue(
+        mockLuggageCategory,
+      );
       userRepository.findOneBy.mockResolvedValue(mockParticipant);
 
       const expectedLuggage = {
@@ -239,7 +241,7 @@ describe('Luggage Capacity and Status Management', () => {
       const result = await luggageService.createForTrip(
         mockTrip.id,
         createLuggageDto,
-        mockParticipant.id
+        mockParticipant.id,
       );
 
       expect(result.maxWeight).toBe(12.5);
@@ -256,7 +258,9 @@ describe('Luggage Capacity and Status Management', () => {
       };
 
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      luggageCategoryRepository.findOneBy.mockResolvedValue(mockLuggageCategory);
+      luggageCategoryRepository.findOneBy.mockResolvedValue(
+        mockLuggageCategory,
+      );
       userRepository.findOneBy.mockResolvedValue(mockTripOwner);
 
       const unlimitedLuggage = {
@@ -271,7 +275,7 @@ describe('Luggage Capacity and Status Management', () => {
       const result = await luggageService.createForTrip(
         mockTrip.id,
         unlimitedLuggageDto,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(result.maxWeight).toBeNull();
@@ -302,7 +306,7 @@ describe('Luggage Capacity and Status Management', () => {
           luggage.id,
           updateDto,
           mockTrip.id,
-          mockParticipant.id
+          mockParticipant.id,
         );
 
         expect(result.status).toBe(transition.to);
@@ -317,7 +321,7 @@ describe('Luggage Capacity and Status Management', () => {
         LuggageStatus.CHECKED,
       ];
 
-      validStatuses.forEach(status => {
+      validStatuses.forEach((status) => {
         expect(Object.values(LuggageStatus)).toContain(status);
       });
     });
@@ -345,7 +349,7 @@ describe('Luggage Capacity and Status Management', () => {
         mockEmptyLuggage.id,
         packingUpdate,
         mockTrip.id,
-        mockParticipant.id
+        mockParticipant.id,
       );
 
       expect(result.status).toBe(LuggageStatus.PACKING);
@@ -367,7 +371,8 @@ describe('Luggage Capacity and Status Management', () => {
         update: jest.fn().mockReturnThis(),
         set: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
-        execute: jest.fn()
+        execute: jest
+          .fn()
           .mockResolvedValueOnce(mockUpdateResult) // Update fails
           .mockResolvedValueOnce(mockInsertResult), // Insert succeeds
         insert: jest.fn().mockReturnThis(),
@@ -386,7 +391,7 @@ describe('Luggage Capacity and Status Management', () => {
       const result = await luggageItemsService.upsert(
         mockEmptyLuggage.id,
         mockHeavyItem.id,
-        upsertDto
+        upsertDto,
       );
 
       expect(result.item.weight).toBe(2.5);
@@ -401,7 +406,7 @@ describe('Luggage Capacity and Status Management', () => {
       ];
 
       const totalWeight = luggageItems.reduce((total, luggageItem) => {
-        return total + (luggageItem.item.weight * luggageItem.quantity);
+        return total + luggageItem.item.weight * luggageItem.quantity;
       }, 0);
 
       expect(totalWeight).toBe(4.3); // 2.5 + 1.2 + 0.6
@@ -411,8 +416,9 @@ describe('Luggage Capacity and Status Management', () => {
       const luggage = mockEmptyLuggage; // 15kg capacity
       const currentWeight = 4.3; // From previous test
       const newItem = { weight: 12.0, quantity: 1 };
-      
-      const wouldExceedCapacity = (currentWeight + (newItem.weight * newItem.quantity)) > luggage.maxWeight;
+
+      const wouldExceedCapacity =
+        currentWeight + newItem.weight * newItem.quantity > luggage.maxWeight;
 
       expect(wouldExceedCapacity).toBe(true); // 4.3 + 12.0 = 16.3 > 15.0
     });
@@ -420,8 +426,11 @@ describe('Luggage Capacity and Status Management', () => {
     it('should allow unlimited capacity luggage', () => {
       const unlimitedLuggage = { ...mockEmptyLuggage, maxWeight: null };
       const heavyItems = Array(10).fill({ weight: 5.0, quantity: 1 });
-      
-      const totalWeight = heavyItems.reduce((sum, item) => sum + item.weight * item.quantity, 0);
+
+      const totalWeight = heavyItems.reduce(
+        (sum, item) => sum + item.weight * item.quantity,
+        0,
+      );
       const hasCapacityLimit = unlimitedLuggage.maxWeight !== null;
 
       expect(totalWeight).toBe(50); // 10 items x 5kg each
@@ -449,7 +458,7 @@ describe('Luggage Capacity and Status Management', () => {
 
       expect(queryBuilder.where).toHaveBeenCalledWith(
         'luggageItem.luggageId = :luggageId',
-        { luggageId: mockPackingLuggage.id }
+        { luggageId: mockPackingLuggage.id },
       );
       expect(result).toEqual(mockLuggageItems);
     });
@@ -472,12 +481,12 @@ describe('Luggage Capacity and Status Management', () => {
 
       const result = await luggageItemsService.findOne(
         mockPackedLuggage.id,
-        mockHeavyItem.id
+        mockHeavyItem.id,
       );
 
       expect(queryBuilder.andWhere).toHaveBeenCalledWith(
         'luggageItem.itemId = :itemId',
-        { itemId: mockHeavyItem.id }
+        { itemId: mockHeavyItem.id },
       );
       expect(result).toEqual(mockLuggageItem);
     });
@@ -513,7 +522,7 @@ describe('Luggage Capacity and Status Management', () => {
       luggageItemRepository.createQueryBuilder.mockReturnValue(queryBuilder);
 
       await expect(
-        luggageItemsService.remove('non-existent-luggage', 'non-existent-item')
+        luggageItemsService.remove('non-existent-luggage', 'non-existent-item'),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -541,10 +550,10 @@ describe('Luggage Capacity and Status Management', () => {
 
     it('should track packing progress by status', () => {
       const allLuggage = [
-        mockEmptyLuggage,    // EMPTY
-        mockPackingLuggage,  // PACKING
-        mockPackedLuggage,   // PACKED
-        mockCheckedLuggage,  // CHECKED
+        mockEmptyLuggage, // EMPTY
+        mockPackingLuggage, // PACKING
+        mockPackedLuggage, // PACKED
+        mockCheckedLuggage, // CHECKED
       ];
 
       const statusCounts = allLuggage.reduce((counts, luggage) => {
@@ -565,7 +574,7 @@ describe('Luggage Capacity and Status Management', () => {
       };
 
       const isEvenlyDistributed = Object.values(userLuggage).every(
-        luggage => luggage.length === 2
+        (luggage) => luggage.length === 2,
       );
 
       expect(isEvenlyDistributed).toBe(true);
@@ -593,7 +602,7 @@ describe('Luggage Capacity and Status Management', () => {
         mockEmptyLuggage.id,
         reassignDto,
         mockTrip.id,
-        mockParticipant.id
+        mockParticipant.id,
       );
 
       expect(result.assignedTo).toEqual(mockTripOwner);
@@ -601,8 +610,9 @@ describe('Luggage Capacity and Status Management', () => {
 
     it('should track original owner vs assigned user', () => {
       const luggage = mockEmptyLuggage;
-      const isOwnerDifferentFromAssigned = luggage.user.id !== luggage.assignedTo?.id;
-      
+      const isOwnerDifferentFromAssigned =
+        luggage.user.id !== luggage.assignedTo?.id;
+
       // In this case, both user and assignedTo are the same participant
       expect(isOwnerDifferentFromAssigned).toBe(false);
     });
@@ -649,8 +659,8 @@ describe('Luggage Capacity and Status Management', () => {
           wrongTripLuggage.id,
           { status: LuggageStatus.PACKING },
           mockTrip.id,
-          mockParticipant.id
-        )
+          mockParticipant.id,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
   });

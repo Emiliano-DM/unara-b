@@ -24,7 +24,15 @@ describe('Database Optimization Verification', () => {
           database: process.env.TEST_DB_NAME || 'unara_optimization_test',
           username: process.env.TEST_DB_USERNAME || 'postgres',
           password: process.env.TEST_DB_PASSWORD || 'password',
-          entities: [Trip, TripParticipant, User, Item, Luggage, ItemCategory, LuggageCategory],
+          entities: [
+            Trip,
+            TripParticipant,
+            User,
+            Item,
+            Luggage,
+            ItemCategory,
+            LuggageCategory,
+          ],
           synchronize: true,
           dropSchema: true,
           logging: ['error'],
@@ -48,8 +56,10 @@ describe('Database Optimization Verification', () => {
   describe('Index Verification', () => {
     it('should have proper indexes on Trip table', async () => {
       const tripIndices = await queryRunner.getIndices('trip');
-      const indexNames = tripIndices.map(idx => idx.name?.toLowerCase() || '');
-      const indexColumns = tripIndices.flatMap(idx => idx.columnNames);
+      const indexNames = tripIndices.map(
+        (idx) => idx.name?.toLowerCase() || '',
+      );
+      const indexColumns = tripIndices.flatMap((idx) => idx.columnNames);
 
       // Verify key indexes exist
       expect(indexColumns).toContain('ownerId');
@@ -61,8 +71,9 @@ describe('Database Optimization Verification', () => {
     });
 
     it('should have proper indexes on TripParticipant table', async () => {
-      const participantIndices = await queryRunner.getIndices('trip_participant');
-      const indexColumns = participantIndices.flatMap(idx => idx.columnNames);
+      const participantIndices =
+        await queryRunner.getIndices('trip_participant');
+      const indexColumns = participantIndices.flatMap((idx) => idx.columnNames);
 
       // Verify key indexes exist
       expect(indexColumns).toContain('tripId');
@@ -71,33 +82,51 @@ describe('Database Optimization Verification', () => {
 
       // Verify unique constraint
       const uniqueConstraints = await queryRunner.getTable('trip_participant');
-      const uniqueNames = uniqueConstraints?.uniques?.map(u => u.name) || [];
-      
-      expect(uniqueNames.some(name => 
-        name?.includes('trip') && name?.includes('user')
-      )).toBe(true);
+      const uniqueNames = uniqueConstraints?.uniques?.map((u) => u.name) || [];
+
+      expect(
+        uniqueNames.some(
+          (name) => name?.includes('trip') && name?.includes('user'),
+        ),
+      ).toBe(true);
 
       console.log('TripParticipant table indexes:', indexColumns);
     });
 
     it('should have proper indexes on Luggage table', async () => {
       const luggageIndices = await queryRunner.getIndices('luggage');
-      const indexColumns = luggageIndices.flatMap(idx => idx.columnNames);
+      const indexColumns = luggageIndices.flatMap((idx) => idx.columnNames);
 
       // Verify foreign key indexes exist
-      expect(indexColumns.some(col => col.includes('tripId') || col.includes('trip'))).toBe(true);
-      expect(indexColumns.some(col => col.includes('userId') || col.includes('user'))).toBe(true);
+      expect(
+        indexColumns.some(
+          (col) => col.includes('tripId') || col.includes('trip'),
+        ),
+      ).toBe(true);
+      expect(
+        indexColumns.some(
+          (col) => col.includes('userId') || col.includes('user'),
+        ),
+      ).toBe(true);
 
       console.log('Luggage table indexes:', indexColumns);
     });
 
     it('should have proper indexes on Item table', async () => {
       const itemIndices = await queryRunner.getIndices('item');
-      const indexColumns = itemIndices.flatMap(idx => idx.columnNames);
+      const indexColumns = itemIndices.flatMap((idx) => idx.columnNames);
 
       // Verify foreign key indexes exist
-      expect(indexColumns.some(col => col.includes('tripId') || col.includes('trip'))).toBe(true);
-      expect(indexColumns.some(col => col.includes('createdById') || col.includes('createdBy'))).toBe(true);
+      expect(
+        indexColumns.some(
+          (col) => col.includes('tripId') || col.includes('trip'),
+        ),
+      ).toBe(true);
+      expect(
+        indexColumns.some(
+          (col) => col.includes('createdById') || col.includes('createdBy'),
+        ),
+      ).toBe(true);
 
       console.log('Item table indexes:', indexColumns);
     });
@@ -108,22 +137,22 @@ describe('Database Optimization Verification', () => {
       // Enable query timing
       await queryRunner.query('SET track_io_timing = on;');
       await queryRunner.query('SET log_statement = all;');
-      
+
       // Test queries with EXPLAIN ANALYZE
       const explainQueries = [
         // Trip by owner query
         `EXPLAIN ANALYZE SELECT * FROM trip WHERE "ownerId" = 'test-uuid';`,
-        
+
         // Trip by share token query
         `EXPLAIN ANALYZE SELECT * FROM trip WHERE "shareToken" = 'test-token' AND "isPublic" = true;`,
-        
+
         // Trip participants query
         `EXPLAIN ANALYZE 
          SELECT tp.*, u."fullname" 
          FROM trip_participant tp 
          JOIN "user" u ON tp."userId" = u.id 
          WHERE tp."tripId" = 'test-uuid' AND tp.status = 'joined';`,
-        
+
         // Items by trip query
         `EXPLAIN ANALYZE 
          SELECT i.*, ic.name as category_name 
@@ -131,7 +160,7 @@ describe('Database Optimization Verification', () => {
          JOIN item_category ic ON i."categoryId" = ic.id 
          WHERE i."tripId" = 'test-uuid' 
          LIMIT 20 OFFSET 0;`,
-        
+
         // Luggage by trip query
         `EXPLAIN ANALYZE 
          SELECT l.*, lc.name as category_name 
@@ -144,7 +173,7 @@ describe('Database Optimization Verification', () => {
       for (const query of explainQueries) {
         try {
           const result = await queryRunner.query(query);
-          
+
           // Look for index usage in the query plan
           const plan = result.map((row: any) => row['QUERY PLAN']).join('\n');
           console.log(`\nQuery: ${query.split('ANALYZE')[1].trim()}`);
@@ -157,7 +186,9 @@ describe('Database Optimization Verification', () => {
             expect(plan).not.toMatch(/Seq Scan.*trip_participant.*tripId/);
           }
         } catch (error) {
-          console.log(`Query failed (expected for test UUIDs): ${error.message.substring(0, 100)}`);
+          console.log(
+            `Query failed (expected for test UUIDs): ${error.message.substring(0, 100)}`,
+          );
         }
       }
     });
@@ -185,16 +216,17 @@ describe('Database Optimization Verification', () => {
       try {
         const result = await queryRunner.query(complexJoinQuery);
         const plan = result.map((row: any) => row['QUERY PLAN']).join('\n');
-        
+
         console.log('\nComplex Join Query Plan:');
         console.log(plan);
 
         // Verify no sequential scans on indexed columns
         expect(plan).not.toMatch(/Seq Scan.*trip.*status/);
         expect(plan).not.toMatch(/Seq Scan.*trip_participant.*status/);
-        
       } catch (error) {
-        console.log(`Complex join query failed (expected in test): ${error.message}`);
+        console.log(
+          `Complex join query failed (expected in test): ${error.message}`,
+        );
       }
     });
   });
@@ -203,7 +235,7 @@ describe('Database Optimization Verification', () => {
     it('should have appropriate column types and constraints', async () => {
       const tripTable = await queryRunner.getTable('trip');
       const participantTable = await queryRunner.getTable('trip_participant');
-      
+
       // Verify varchar lengths are appropriate
       const nameColumn = tripTable?.findColumnByName('name');
       expect(nameColumn?.type).toContain('varchar');
@@ -233,8 +265,8 @@ describe('Database Optimization Verification', () => {
 
       // Verify cascade options for data integrity
       const participantFKeys = participantTable?.foreignKeys || [];
-      const tripParticipantFK = participantFKeys.find(fk => 
-        fk.referencedTableName === 'trip'
+      const tripParticipantFK = participantFKeys.find(
+        (fk) => fk.referencedTableName === 'trip',
       );
       expect(tripParticipantFK?.onDelete).toBe('CASCADE');
 
@@ -242,8 +274,12 @@ describe('Database Optimization Verification', () => {
       const itemFKeys = itemTable?.foreignKeys || [];
       const luggageFKeys = luggageTable?.foreignKeys || [];
 
-      expect(itemFKeys.some(fk => fk.referencedTableName === 'trip')).toBe(true);
-      expect(luggageFKeys.some(fk => fk.referencedTableName === 'trip')).toBe(true);
+      expect(itemFKeys.some((fk) => fk.referencedTableName === 'trip')).toBe(
+        true,
+      );
+      expect(luggageFKeys.some((fk) => fk.referencedTableName === 'trip')).toBe(
+        true,
+      );
 
       console.log('Foreign key constraints verified');
     });
@@ -264,26 +300,32 @@ describe('Database Optimization Verification', () => {
       try {
         const result = await queryRunner.query(paginationQuery);
         const plan = result.map((row: any) => row['QUERY PLAN']).join('\n');
-        
+
         console.log('\nPagination Query Plan:');
         console.log(plan.substring(0, 300));
 
         // Should use index for ordering and filtering
         expect(plan).toMatch(/(Index|Sort)/i);
-        
       } catch (error) {
-        console.log(`Pagination query analysis: ${error.message.substring(0, 100)}`);
+        console.log(
+          `Pagination query analysis: ${error.message.substring(0, 100)}`,
+        );
       }
     });
 
     it('should handle concurrent access efficiently', async () => {
       // Verify isolation levels and locking mechanisms
-      const isolationLevel = await queryRunner.query('SHOW transaction_isolation;');
-      console.log('Transaction isolation level:', isolationLevel[0].transaction_isolation);
+      const isolationLevel = await queryRunner.query(
+        'SHOW transaction_isolation;',
+      );
+      console.log(
+        'Transaction isolation level:',
+        isolationLevel[0].transaction_isolation,
+      );
 
       // Should be READ COMMITTED or REPEATABLE READ for good concurrency
       expect(['read committed', 'repeatable read']).toContain(
-        isolationLevel[0].transaction_isolation.toLowerCase()
+        isolationLevel[0].transaction_isolation.toLowerCase(),
       );
     });
   });

@@ -181,7 +181,7 @@ describe('Item Assignment Workflow Integration', () => {
       const result = await itemsService.createForTrip(
         mockTrip.id,
         createItemDto,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(result.status).toBe(ItemStatus.PLANNED);
@@ -213,7 +213,7 @@ describe('Item Assignment Workflow Integration', () => {
         mockPlannedItem.id,
         updateItemDto,
         mockTrip.id,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(result.assignedTo).toEqual(mockParticipant);
@@ -242,7 +242,7 @@ describe('Item Assignment Workflow Integration', () => {
         mockPackedItem.id,
         updateItemDto,
         mockTrip.id,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(result.quantity).toBe(4);
@@ -273,7 +273,7 @@ describe('Item Assignment Workflow Integration', () => {
         mockPlannedItem.id,
         statusUpdate,
         mockTrip.id,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(result.status).toBe(ItemStatus.PACKED);
@@ -299,7 +299,7 @@ describe('Item Assignment Workflow Integration', () => {
         mockPlannedItem.id,
         forgottenUpdate,
         mockTrip.id,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(result.status).toBe(ItemStatus.FORGOTTEN);
@@ -312,7 +312,7 @@ describe('Item Assignment Workflow Integration', () => {
         ItemStatus.FORGOTTEN,
       ];
 
-      validStatuses.forEach(status => {
+      validStatuses.forEach((status) => {
         expect(Object.values(ItemStatus)).toContain(status);
       });
     });
@@ -346,7 +346,7 @@ describe('Item Assignment Workflow Integration', () => {
       const result = await itemsService.createForTrip(
         mockTrip.id,
         sharedItemDto,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(result.assignedTo).toBeNull();
@@ -379,7 +379,7 @@ describe('Item Assignment Workflow Integration', () => {
       const result = await itemsService.createForTrip(
         mockTrip.id,
         participantItemDto,
-        mockParticipant.id
+        mockParticipant.id,
       );
 
       expect(result.createdBy).toEqual(mockParticipant);
@@ -406,7 +406,7 @@ describe('Item Assignment Workflow Integration', () => {
         mockPackedItem.id,
         reassignDto,
         mockTrip.id,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(result.assignedTo).toEqual(mockTripOwner);
@@ -416,7 +416,7 @@ describe('Item Assignment Workflow Integration', () => {
   describe('Trip Item Queries and Filtering', () => {
     it('should find items by trip with assignment info', async () => {
       const mockItems = [mockPlannedItem, mockPackedItem];
-      
+
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
 
       const queryBuilder = {
@@ -431,11 +431,12 @@ describe('Item Assignment Workflow Integration', () => {
 
       const result = await itemsService.findByTrip(
         mockTrip.id,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-        'item.assignedTo', expect.any(String)
+        'item.assignedTo',
+        expect.any(String),
       );
       expect(result).toEqual(mockItems);
     });
@@ -459,12 +460,12 @@ describe('Item Assignment Workflow Integration', () => {
       const result = await itemsService.findByTrip(
         mockTrip.id,
         mockTripOwner.id,
-        filterDto
+        filterDto,
       );
 
       expect(queryBuilder.andWhere).toHaveBeenCalledWith(
         'item.status = :status',
-        { status: ItemStatus.PACKED }
+        { status: ItemStatus.PACKED },
       );
       expect(result).toEqual(packedItems);
     });
@@ -486,10 +487,10 @@ describe('Item Assignment Workflow Integration', () => {
 
       const result = await itemsService.findByTrip(
         mockTrip.id,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
-      expect(result.some(item => item.assignedTo !== null)).toBe(true);
+      expect(result.some((item) => item.assignedTo !== null)).toBe(true);
     });
   });
 
@@ -502,7 +503,7 @@ describe('Item Assignment Workflow Integration', () => {
       await itemsService.removeFromTrip(
         mockPlannedItem.id,
         mockTrip.id,
-        mockTripOwner.id
+        mockTripOwner.id,
       );
 
       expect(itemRepository.remove).toHaveBeenCalledWith(mockPlannedItem);
@@ -521,8 +522,8 @@ describe('Item Assignment Workflow Integration', () => {
         itemsService.removeFromTrip(
           wrongTripItem.id,
           mockTrip.id,
-          mockTripOwner.id
-        )
+          mockTripOwner.id,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -530,7 +531,9 @@ describe('Item Assignment Workflow Integration', () => {
   describe('Assignment Analytics', () => {
     it('should track assignment completeness', () => {
       const items = [mockPlannedItem, mockPackedItem];
-      const assignedCount = items.filter(item => item.assignedTo !== null).length;
+      const assignedCount = items.filter(
+        (item) => item.assignedTo !== null,
+      ).length;
       const totalCount = items.length;
       const assignmentRate = (assignedCount / totalCount) * 100;
 
@@ -539,7 +542,7 @@ describe('Item Assignment Workflow Integration', () => {
 
     it('should identify unassigned items', () => {
       const items = [mockPlannedItem, mockPackedItem];
-      const unassignedItems = items.filter(item => item.assignedTo === null);
+      const unassignedItems = items.filter((item) => item.assignedTo === null);
 
       expect(unassignedItems.length).toBe(1);
       expect(unassignedItems[0].name).toBe('Camping Tent');
@@ -547,7 +550,9 @@ describe('Item Assignment Workflow Integration', () => {
 
     it('should track packing progress', () => {
       const items = [mockPlannedItem, mockPackedItem];
-      const packedCount = items.filter(item => item.status === ItemStatus.PACKED).length;
+      const packedCount = items.filter(
+        (item) => item.status === ItemStatus.PACKED,
+      ).length;
       const packingProgress = (packedCount / items.length) * 100;
 
       expect(packingProgress).toBe(50); // 1 out of 2 items packed
@@ -558,9 +563,11 @@ describe('Item Assignment Workflow Integration', () => {
         ...mockPlannedItem,
         status: ItemStatus.FORGOTTEN,
       };
-      
+
       const items = [mockPackedItem, forgottenItem];
-      const forgottenCount = items.filter(item => item.status === ItemStatus.FORGOTTEN).length;
+      const forgottenCount = items.filter(
+        (item) => item.status === ItemStatus.FORGOTTEN,
+      ).length;
 
       expect(forgottenCount).toBe(1);
     });
@@ -580,7 +587,7 @@ describe('Item Assignment Workflow Integration', () => {
 
       itemRepository.findOne.mockResolvedValue(mockPlannedItem);
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // This would need additional validation logic in the service
       // For now, we test that the assignment field is accessible
       expect(assignDto.assignedTo).toBe(nonParticipant.id);
@@ -600,8 +607,8 @@ describe('Item Assignment Workflow Integration', () => {
         itemsService.createForTrip(
           mockTrip.id,
           createItemDto,
-          mockTripOwner.id
-        )
+          mockTripOwner.id,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
   });

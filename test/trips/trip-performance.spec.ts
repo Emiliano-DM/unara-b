@@ -43,7 +43,15 @@ describe('Trip Performance Tests', () => {
           database: process.env.TEST_DB_NAME || 'unara_perf_test',
           username: process.env.TEST_DB_USERNAME || 'postgres',
           password: process.env.TEST_DB_PASSWORD || 'password',
-          entities: [Trip, TripParticipant, User, Item, Luggage, ItemCategory, LuggageCategory],
+          entities: [
+            Trip,
+            TripParticipant,
+            User,
+            Item,
+            Luggage,
+            ItemCategory,
+            LuggageCategory,
+          ],
           synchronize: true,
           dropSchema: true,
           logging: false,
@@ -59,11 +67,19 @@ describe('Trip Performance Tests', () => {
     luggageService = module.get<LuggageService>(LuggageService);
     tripRepository = module.get<Repository<Trip>>(getRepositoryToken(Trip));
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    participantRepository = module.get<Repository<TripParticipant>>(getRepositoryToken(TripParticipant));
+    participantRepository = module.get<Repository<TripParticipant>>(
+      getRepositoryToken(TripParticipant),
+    );
     itemRepository = module.get<Repository<Item>>(getRepositoryToken(Item));
-    luggageRepository = module.get<Repository<Luggage>>(getRepositoryToken(Luggage));
-    itemCategoryRepository = module.get<Repository<ItemCategory>>(getRepositoryToken(ItemCategory));
-    luggageCategoryRepository = module.get<Repository<LuggageCategory>>(getRepositoryToken(LuggageCategory));
+    luggageRepository = module.get<Repository<Luggage>>(
+      getRepositoryToken(Luggage),
+    );
+    itemCategoryRepository = module.get<Repository<ItemCategory>>(
+      getRepositoryToken(ItemCategory),
+    );
+    luggageCategoryRepository = module.get<Repository<LuggageCategory>>(
+      getRepositoryToken(LuggageCategory),
+    );
   });
 
   afterAll(async () => {
@@ -124,7 +140,10 @@ describe('Trip Performance Tests', () => {
 
       // Test trip listing performance
       const listStartTime = Date.now();
-      const userTrips = await tripsService.findAll(testUser.id, { limit: 50, offset: 0 });
+      const userTrips = await tripsService.findAll(testUser.id, {
+        limit: 50,
+        offset: 0,
+      });
       const listTime = Date.now() - listStartTime;
 
       expect(userTrips).toHaveLength(50); // Limited to 50
@@ -135,28 +154,37 @@ describe('Trip Performance Tests', () => {
 
     it('should handle 50 participants per trip efficiently', async () => {
       // Create a trip
-      const trip = await tripsService.create({
-        name: 'Large Participant Trip',
-        description: 'Testing with many participants',
-      }, testUser.id);
+      const trip = await tripsService.create(
+        {
+          name: 'Large Participant Trip',
+          description: 'Testing with many participants',
+        },
+        testUser.id,
+      );
 
       // Create 50 users
       const userPromises: Promise<User>[] = [];
       for (let i = 0; i < 50; i++) {
-        userPromises.push(userRepository.save({
-          fullname: `Participant ${i}`,
-          email: `participant${i}@test.com`,
-          username: `participant${i}`,
-          password: 'hashedpassword',
-        }));
+        userPromises.push(
+          userRepository.save({
+            fullname: `Participant ${i}`,
+            email: `participant${i}@test.com`,
+            username: `participant${i}`,
+            password: 'hashedpassword',
+          }),
+        );
       }
 
       const participants = await Promise.all(userPromises);
 
       // Invite all participants
       const startTime = Date.now();
-      const invitePromises = participants.map(participant =>
-        tripsService.inviteParticipant(trip.id, { userId: participant.id }, testUser.id)
+      const invitePromises = participants.map((participant) =>
+        tripsService.inviteParticipant(
+          trip.id,
+          { userId: participant.id },
+          testUser.id,
+        ),
       );
 
       await Promise.all(invitePromises);
@@ -179,10 +207,13 @@ describe('Trip Performance Tests', () => {
 
     it('should handle large numbers of items and luggage efficiently', async () => {
       // Create a trip
-      const trip = await tripsService.create({
-        name: 'Content Heavy Trip',
-        description: 'Testing with lots of content',
-      }, testUser.id);
+      const trip = await tripsService.create(
+        {
+          name: 'Content Heavy Trip',
+          description: 'Testing with lots of content',
+        },
+        testUser.id,
+      );
 
       // Create 200 items
       const itemStartTime = Date.now();
@@ -194,7 +225,9 @@ describe('Trip Performance Tests', () => {
           description: `Description for item ${i}`,
           categoryId: itemCategory.id,
         };
-        itemPromises.push(itemsService.createForTrip(trip.id, createItemDto, testUser.id));
+        itemPromises.push(
+          itemsService.createForTrip(trip.id, createItemDto, testUser.id),
+        );
       }
 
       await Promise.all(itemPromises);
@@ -214,7 +247,9 @@ describe('Trip Performance Tests', () => {
           description: `Description for luggage ${i}`,
           categoryId: luggageCategory.id,
         };
-        luggagePromises.push(luggageService.createForTrip(trip.id, createLuggageDto, testUser.id));
+        luggagePromises.push(
+          luggageService.createForTrip(trip.id, createLuggageDto, testUser.id),
+        );
       }
 
       await Promise.all(luggagePromises);
@@ -226,10 +261,13 @@ describe('Trip Performance Tests', () => {
 
       // Test querying trip content
       const queryStartTime = Date.now();
-      
+
       const [tripItems, tripLuggage] = await Promise.all([
         itemsService.findByTrip(trip.id, testUser.id, { limit: 50, offset: 0 }),
-        luggageService.findByTrip(trip.id, testUser.id, { limit: 50, offset: 0 }),
+        luggageService.findByTrip(trip.id, testUser.id, {
+          limit: 50,
+          offset: 0,
+        }),
       ]);
 
       const queryTime = Date.now() - queryStartTime;
@@ -247,12 +285,15 @@ describe('Trip Performance Tests', () => {
       // Create trips for performance testing
       const trips: Trip[] = [];
       for (let i = 0; i < 50; i++) {
-        const trip = await tripsService.create({
-          name: `Query Test Trip ${i}`,
-          description: `Description ${i}`,
-          status: i % 2 === 0 ? 'planning' : 'active',
-          isPublic: i % 3 === 0,
-        }, testUser.id);
+        const trip = await tripsService.create(
+          {
+            name: `Query Test Trip ${i}`,
+            description: `Description ${i}`,
+            status: i % 2 === 0 ? 'planning' : 'active',
+            isPublic: i % 3 === 0,
+          },
+          testUser.id,
+        );
         trips.push(trip);
       }
 
@@ -260,24 +301,24 @@ describe('Trip Performance Tests', () => {
       const startTime = Date.now();
 
       // Query by status
-      const planningTrips = await tripsService.findAll(testUser.id, { 
+      const planningTrips = await tripsService.findAll(testUser.id, {
         status: 'planning',
         limit: 20,
-        offset: 0 
+        offset: 0,
       });
 
       // Query public trips
-      const publicTrips = await tripsService.findAll(testUser.id, { 
+      const publicTrips = await tripsService.findAll(testUser.id, {
         isPublic: true,
         limit: 20,
-        offset: 0 
+        offset: 0,
       });
 
       // Query by name pattern
-      const namedTrips = await tripsService.findAll(testUser.id, { 
+      const namedTrips = await tripsService.findAll(testUser.id, {
         name: 'Query Test',
         limit: 20,
-        offset: 0 
+        offset: 0,
       });
 
       const queryTime = Date.now() - startTime;
@@ -292,31 +333,42 @@ describe('Trip Performance Tests', () => {
 
     it('should handle concurrent read operations efficiently', async () => {
       // Create test trip with content
-      const trip = await tripsService.create({
-        name: 'Concurrent Read Test',
-        description: 'Testing concurrent reads',
-      }, testUser.id);
+      const trip = await tripsService.create(
+        {
+          name: 'Concurrent Read Test',
+          description: 'Testing concurrent reads',
+        },
+        testUser.id,
+      );
 
       // Add some content
       await Promise.all([
-        itemsService.createForTrip(trip.id, {
-          name: 'Test Item',
-          categoryId: itemCategory.id,
-        }, testUser.id),
-        luggageService.createForTrip(trip.id, {
-          name: 'Test Luggage',
-          categoryId: luggageCategory.id,
-        }, testUser.id),
+        itemsService.createForTrip(
+          trip.id,
+          {
+            name: 'Test Item',
+            categoryId: itemCategory.id,
+          },
+          testUser.id,
+        ),
+        luggageService.createForTrip(
+          trip.id,
+          {
+            name: 'Test Luggage',
+            categoryId: luggageCategory.id,
+          },
+          testUser.id,
+        ),
       ]);
 
       // Simulate 20 concurrent read operations
       const startTime = Date.now();
-      const readPromises = Array.from({ length: 20 }, () => 
+      const readPromises = Array.from({ length: 20 }, () =>
         Promise.all([
           tripsService.findOne(trip.id, testUser.id),
           itemsService.findByTrip(trip.id, testUser.id),
           luggageService.findByTrip(trip.id, testUser.id),
-        ])
+        ]),
       );
 
       await Promise.all(readPromises);
@@ -324,51 +376,62 @@ describe('Trip Performance Tests', () => {
 
       expect(concurrentReadTime).toBeLessThan(2000); // Should complete in under 2 seconds
 
-      console.log(`20 concurrent read operations completed in ${concurrentReadTime}ms`);
+      console.log(
+        `20 concurrent read operations completed in ${concurrentReadTime}ms`,
+      );
     });
   });
 
   describe('Memory Usage and Resource Management', () => {
     it('should handle pagination efficiently for large datasets', async () => {
       // Create trip with many items
-      const trip = await tripsService.create({
-        name: 'Pagination Test Trip',
-        description: 'Testing pagination performance',
-      }, testUser.id);
+      const trip = await tripsService.create(
+        {
+          name: 'Pagination Test Trip',
+          description: 'Testing pagination performance',
+        },
+        testUser.id,
+      );
 
       // Create 1000 items
       const batchSize = 100;
       for (let batch = 0; batch < 10; batch++) {
         const itemPromises: Promise<Item>[] = [];
-        
+
         for (let i = 0; i < batchSize; i++) {
           const itemIndex = batch * batchSize + i;
-          itemPromises.push(itemsService.createForTrip(trip.id, {
-            name: `Pagination Item ${itemIndex}`,
-            categoryId: itemCategory.id,
-          }, testUser.id));
+          itemPromises.push(
+            itemsService.createForTrip(
+              trip.id,
+              {
+                name: `Pagination Item ${itemIndex}`,
+                categoryId: itemCategory.id,
+              },
+              testUser.id,
+            ),
+          );
         }
-        
+
         await Promise.all(itemPromises);
       }
 
       // Test paginated queries
       const pageSize = 50;
       const startTime = Date.now();
-      
+
       // Get first 5 pages
       const pagePromises = Array.from({ length: 5 }, (_, pageIndex) =>
         itemsService.findByTrip(trip.id, testUser.id, {
           limit: pageSize,
           offset: pageIndex * pageSize,
-        })
+        }),
       );
 
       const pages = await Promise.all(pagePromises);
       const paginationTime = Date.now() - startTime;
 
       // Verify pagination works correctly
-      pages.forEach(page => {
+      pages.forEach((page) => {
         expect(page).toHaveLength(pageSize);
       });
 

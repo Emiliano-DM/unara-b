@@ -142,7 +142,7 @@ describe('Trip Entity', () => {
       const trip = tripRepository.create({
         name: 'Budget Trip',
         owner: testUser,
-        budget: 1500.50,
+        budget: 1500.5,
         currency: 'EUR',
       });
 
@@ -185,14 +185,21 @@ describe('Trip Entity', () => {
       expect(savedTrip.accommodation).toBe('Hotels and Airbnb');
       expect(savedTrip.transportation).toBe('Flight + Car rental');
       expect(savedTrip.bookingDeadline).toEqual(new Date('2024-05-01'));
-      expect(savedTrip.requirements).toBe('Passport required, health insurance recommended');
+      expect(savedTrip.requirements).toBe(
+        'Passport required, health insurance recommended',
+      );
     });
   });
 
   describe('Status Management', () => {
     it('should accept valid trip status values', async () => {
-      const statuses = [TripStatus.PLANNING, TripStatus.ACTIVE, TripStatus.COMPLETED, TripStatus.CANCELLED];
-      
+      const statuses = [
+        TripStatus.PLANNING,
+        TripStatus.ACTIVE,
+        TripStatus.COMPLETED,
+        TripStatus.CANCELLED,
+      ];
+
       for (const status of statuses) {
         const trip = tripRepository.create({
           name: `Trip ${status}`,
@@ -219,7 +226,7 @@ describe('Trip Entity', () => {
     });
 
     it('should store coordinates as JSON', async () => {
-      const coordinates = JSON.stringify({ lat: 40.7128, lng: -74.0060 });
+      const coordinates = JSON.stringify({ lat: 40.7128, lng: -74.006 });
       const trip = tripRepository.create({
         name: 'GPS Trip',
         owner: testUser,
@@ -229,7 +236,10 @@ describe('Trip Entity', () => {
       const savedTrip = await tripRepository.save(trip);
 
       expect(savedTrip.coordinates).toBe(coordinates);
-      expect(JSON.parse(savedTrip.coordinates)).toEqual({ lat: 40.7128, lng: -74.0060 });
+      expect(JSON.parse(savedTrip.coordinates)).toEqual({
+        lat: 40.7128,
+        lng: -74.006,
+      });
     });
   });
 });

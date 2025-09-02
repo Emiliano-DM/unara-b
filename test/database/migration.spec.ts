@@ -52,7 +52,7 @@ describe('Database Migration Safety', () => {
 
       if (tripTableExists) {
         const tripTable = await queryRunner.getTable('trip');
-        
+
         // Verify columns
         expect(tripTable?.findColumnByName('id')).toBeDefined();
         expect(tripTable?.findColumnByName('name')).toBeDefined();
@@ -65,8 +65,8 @@ describe('Database Migration Safety', () => {
 
         // Verify foreign keys
         const foreignKeys = tripTable?.foreignKeys || [];
-        const ownerForeignKey = foreignKeys.find(fk => 
-          fk.columnNames.includes('ownerId')
+        const ownerForeignKey = foreignKeys.find((fk) =>
+          fk.columnNames.includes('ownerId'),
         );
         expect(ownerForeignKey).toBeDefined();
         expect(ownerForeignKey?.referencedTableName).toBe('user');
@@ -74,12 +74,13 @@ describe('Database Migration Safety', () => {
     });
 
     it('should create trip participant table successfully', async () => {
-      const participantTableExists = await queryRunner.hasTable('trip_participant');
+      const participantTableExists =
+        await queryRunner.hasTable('trip_participant');
       expect(participantTableExists).toBe(true);
 
       if (participantTableExists) {
         const participantTable = await queryRunner.getTable('trip_participant');
-        
+
         // Verify columns
         expect(participantTable?.findColumnByName('id')).toBeDefined();
         expect(participantTable?.findColumnByName('tripId')).toBeDefined();
@@ -89,8 +90,10 @@ describe('Database Migration Safety', () => {
 
         // Verify unique constraint
         const uniqueConstraints = participantTable?.uniques || [];
-        const tripUserUnique = uniqueConstraints.find(u => 
-          u.columnNames.includes('tripId') && u.columnNames.includes('userId')
+        const tripUserUnique = uniqueConstraints.find(
+          (u) =>
+            u.columnNames.includes('tripId') &&
+            u.columnNames.includes('userId'),
         );
         expect(tripUserUnique).toBeDefined();
       }
@@ -113,10 +116,18 @@ describe('Database Migration Safety', () => {
       const luggageForeignKeys = luggageTable?.foreignKeys || [];
       const itemForeignKeys = itemTable?.foreignKeys || [];
 
-      expect(luggageForeignKeys.some(fk => fk.columnNames.includes('tripId'))).toBe(true);
-      expect(luggageForeignKeys.some(fk => fk.columnNames.includes('userId'))).toBe(true);
-      expect(itemForeignKeys.some(fk => fk.columnNames.includes('tripId'))).toBe(true);
-      expect(itemForeignKeys.some(fk => fk.columnNames.includes('createdById'))).toBe(true);
+      expect(
+        luggageForeignKeys.some((fk) => fk.columnNames.includes('tripId')),
+      ).toBe(true);
+      expect(
+        luggageForeignKeys.some((fk) => fk.columnNames.includes('userId')),
+      ).toBe(true);
+      expect(
+        itemForeignKeys.some((fk) => fk.columnNames.includes('tripId')),
+      ).toBe(true);
+      expect(
+        itemForeignKeys.some((fk) => fk.columnNames.includes('createdById')),
+      ).toBe(true);
     });
   });
 
@@ -124,18 +135,25 @@ describe('Database Migration Safety', () => {
     it('should create indexes for performance', async () => {
       // Check that indexes are created for trip table
       const tripIndices = await queryRunner.getIndices('trip');
-      const indexNames = tripIndices.map(idx => idx.name);
+      const indexNames = tripIndices.map((idx) => idx.name);
 
-      expect(indexNames.some(name => name?.includes('OWNER_ID'))).toBe(true);
-      expect(indexNames.some(name => name?.includes('SHARE_TOKEN'))).toBe(true);
-      expect(indexNames.some(name => name?.includes('STATUS'))).toBe(true);
+      expect(indexNames.some((name) => name?.includes('OWNER_ID'))).toBe(true);
+      expect(indexNames.some((name) => name?.includes('SHARE_TOKEN'))).toBe(
+        true,
+      );
+      expect(indexNames.some((name) => name?.includes('STATUS'))).toBe(true);
 
       // Check participant table indexes
-      const participantIndices = await queryRunner.getIndices('trip_participant');
-      const participantIndexNames = participantIndices.map(idx => idx.name);
+      const participantIndices =
+        await queryRunner.getIndices('trip_participant');
+      const participantIndexNames = participantIndices.map((idx) => idx.name);
 
-      expect(participantIndexNames.some(name => name?.includes('TRIP_ID'))).toBe(true);
-      expect(participantIndexNames.some(name => name?.includes('USER_ID'))).toBe(true);
+      expect(
+        participantIndexNames.some((name) => name?.includes('TRIP_ID')),
+      ).toBe(true);
+      expect(
+        participantIndexNames.some((name) => name?.includes('USER_ID')),
+      ).toBe(true);
     });
   });
 
@@ -143,26 +161,44 @@ describe('Database Migration Safety', () => {
     it('should rollback cleanly if needed', async () => {
       // This test would be run in a separate test environment
       // For now, we verify that rollback methods are properly defined
-      
+
       // Import migration classes to verify they have proper down methods
-      const { CreateTripTable1703000001000 } = await import('../../src/database/migrations/1703000001000-CreateTripTable');
-      const { CreateTripParticipantTable1703000002000 } = await import('../../src/database/migrations/1703000002000-CreateTripParticipantTable');
-      const { AddTripRelationsToLuggage1703000003000 } = await import('../../src/database/migrations/1703000003000-AddTripRelationsToLuggage');
-      const { AddTripRelationsToItems1703000004000 } = await import('../../src/database/migrations/1703000004000-AddTripRelationsToItems');
+      const { CreateTripTable1703000001000 } = await import(
+        '../../src/database/migrations/1703000001000-CreateTripTable'
+      );
+      const { CreateTripParticipantTable1703000002000 } = await import(
+        '../../src/database/migrations/1703000002000-CreateTripParticipantTable'
+      );
+      const { AddTripRelationsToLuggage1703000003000 } = await import(
+        '../../src/database/migrations/1703000003000-AddTripRelationsToLuggage'
+      );
+      const { AddTripRelationsToItems1703000004000 } = await import(
+        '../../src/database/migrations/1703000004000-AddTripRelationsToItems'
+      );
 
       // Verify down methods exist
       expect(typeof new CreateTripTable1703000001000().down).toBe('function');
-      expect(typeof new CreateTripParticipantTable1703000002000().down).toBe('function');
-      expect(typeof new AddTripRelationsToLuggage1703000003000().down).toBe('function');
-      expect(typeof new AddTripRelationsToItems1703000004000().down).toBe('function');
+      expect(typeof new CreateTripParticipantTable1703000002000().down).toBe(
+        'function',
+      );
+      expect(typeof new AddTripRelationsToLuggage1703000003000().down).toBe(
+        'function',
+      );
+      expect(typeof new AddTripRelationsToItems1703000004000().down).toBe(
+        'function',
+      );
     });
   });
 
   describe('Data Integrity', () => {
     it('should maintain referential integrity', async () => {
       // Create test data to verify constraints work
-      const tripRepository = module.get<Repository<Trip>>(getRepositoryToken(Trip));
-      const userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+      const tripRepository = module.get<Repository<Trip>>(
+        getRepositoryToken(Trip),
+      );
+      const userRepository = module.get<Repository<User>>(
+        getRepositoryToken(User),
+      );
 
       // This would create test user and trip, then verify constraints
       // For now, we just verify the repositories are available
@@ -174,7 +210,9 @@ describe('Database Migration Safety', () => {
       // Test that when a trip is deleted, participants are also deleted
       // Test that when a user is deleted, their trips are handled appropriately
       // This would require actual test data setup
-      const participantRepository = module.get<Repository<TripParticipant>>(getRepositoryToken(TripParticipant));
+      const participantRepository = module.get<Repository<TripParticipant>>(
+        getRepositoryToken(TripParticipant),
+      );
       expect(participantRepository).toBeDefined();
     });
   });

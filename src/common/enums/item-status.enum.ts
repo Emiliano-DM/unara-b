@@ -1,6 +1,6 @@
 export enum ItemStatus {
   PLANNED = 'planned',
-  ASSIGNED = 'assigned', 
+  ASSIGNED = 'assigned',
   PURCHASED = 'purchased',
   PACKED = 'packed',
   FORGOTTEN = 'forgotten',

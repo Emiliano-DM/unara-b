@@ -11,7 +11,7 @@ import { TripsModule } from '../trips/trips.module';
   controllers: [ItemsController],
   providers: [ItemsService],
   imports: [
-    TypeOrmModule.forFeature([ Item, User ]),
+    TypeOrmModule.forFeature([Item, User]),
     ItemCategoriesModule,
     forwardRef(() => TripsModule),
   ],

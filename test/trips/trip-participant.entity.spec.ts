@@ -156,12 +156,13 @@ describe('TripParticipant Entity', () => {
     });
 
     const savedParticipant = await participantRepository.save(participant);
-    
+
     // Update status to joined
     savedParticipant.status = ParticipantStatus.JOINED;
     savedParticipant.joinedAt = new Date();
-    
-    const updatedParticipant = await participantRepository.save(savedParticipant);
+
+    const updatedParticipant =
+      await participantRepository.save(savedParticipant);
 
     expect(updatedParticipant.status).toBe(ParticipantStatus.JOINED);
     expect(updatedParticipant.joinedAt).toBeDefined();

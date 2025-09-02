@@ -115,7 +115,7 @@ describe('Luggage-Trip Integration', () => {
 
       // Mock category lookup
       luggageCategoryRepository.findOneBy.mockResolvedValue(mockCategory);
-      
+
       // Mock trip access validation
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
 
@@ -133,9 +133,16 @@ describe('Luggage-Trip Integration', () => {
       luggageRepository.create.mockReturnValue(expectedLuggage);
       luggageRepository.save.mockResolvedValue(expectedLuggage);
 
-      const result = await luggageService.createForTrip(mockTrip.id, createLuggageDto, mockUser.id);
+      const result = await luggageService.createForTrip(
+        mockTrip.id,
+        createLuggageDto,
+        mockUser.id,
+      );
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        mockUser.id,
+      );
       expect(luggageRepository.create).toHaveBeenCalledWith({
         name: 'Travel Backpack',
         category: mockCategory,
@@ -153,13 +160,22 @@ describe('Luggage-Trip Integration', () => {
       };
 
       // Mock trip not found
-      jest.spyOn(tripsService, 'findOne').mockRejectedValue(new NotFoundException('Trip not found'));
+      jest
+        .spyOn(tripsService, 'findOne')
+        .mockRejectedValue(new NotFoundException('Trip not found'));
 
       await expect(
-        luggageService.createForTrip('non-existent-trip', createLuggageDto, mockUser.id)
+        luggageService.createForTrip(
+          'non-existent-trip',
+          createLuggageDto,
+          mockUser.id,
+        ),
       ).rejects.toThrow(NotFoundException);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith('non-existent-trip', mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        'non-existent-trip',
+        mockUser.id,
+      );
       expect(luggageRepository.create).not.toHaveBeenCalled();
     });
 
@@ -170,13 +186,22 @@ describe('Luggage-Trip Integration', () => {
       };
 
       // Mock forbidden access
-      jest.spyOn(tripsService, 'findOne').mockRejectedValue(new ForbiddenException('Access denied'));
+      jest
+        .spyOn(tripsService, 'findOne')
+        .mockRejectedValue(new ForbiddenException('Access denied'));
 
       await expect(
-        luggageService.createForTrip(mockTrip.id, createLuggageDto, 'unauthorized-user')
+        luggageService.createForTrip(
+          mockTrip.id,
+          createLuggageDto,
+          'unauthorized-user',
+        ),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, 'unauthorized-user');
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        'unauthorized-user',
+      );
       expect(luggageRepository.create).not.toHaveBeenCalled();
     });
 
@@ -188,15 +213,21 @@ describe('Luggage-Trip Integration', () => {
 
       // Mock trip access success
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock category not found
       luggageCategoryRepository.findOneBy.mockResolvedValue(null);
 
       await expect(
-        luggageService.createForTrip(mockTrip.id, createLuggageDto, mockUser.id)
+        luggageService.createForTrip(
+          mockTrip.id,
+          createLuggageDto,
+          mockUser.id,
+        ),
       ).rejects.toThrow(NotFoundException);
 
-      expect(luggageCategoryRepository.findOneBy).toHaveBeenCalledWith({ id: 'non-existent-category' });
+      expect(luggageCategoryRepository.findOneBy).toHaveBeenCalledWith({
+        id: 'non-existent-category',
+      });
     });
   });
 
@@ -230,28 +261,52 @@ describe('Luggage-Trip Integration', () => {
         getMany: jest.fn().mockResolvedValue(mockLuggageList),
       };
 
-      luggageRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      luggageRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       const result = await luggageService.findByTrip(mockTrip.id, mockUser.id);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, mockUser.id);
-      expect(luggageRepository.createQueryBuilder).toHaveBeenCalledWith('luggage');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('luggage.category', 'category');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('luggage.trip', 'trip');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('luggage.user', 'user');
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('trip.id = :tripId', { tripId: mockTrip.id });
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        mockUser.id,
+      );
+      expect(luggageRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'luggage',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'luggage.category',
+        'category',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'luggage.trip',
+        'trip',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'luggage.user',
+        'user',
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'trip.id = :tripId',
+        { tripId: mockTrip.id },
+      );
       expect(result).toEqual(mockLuggageList);
     });
 
     it('should handle user permissions for trip luggage', async () => {
       // Mock unauthorized access to trip
-      jest.spyOn(tripsService, 'findOne').mockRejectedValue(new ForbiddenException('Access denied'));
+      jest
+        .spyOn(tripsService, 'findOne')
+        .mockRejectedValue(new ForbiddenException('Access denied'));
 
       await expect(
-        luggageService.findByTrip(mockTrip.id, 'unauthorized-user')
+        luggageService.findByTrip(mockTrip.id, 'unauthorized-user'),
       ).rejects.toThrow(ForbiddenException);
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, 'unauthorized-user');
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        'unauthorized-user',
+      );
       expect(luggageRepository.createQueryBuilder).not.toHaveBeenCalled();
     });
 
@@ -267,7 +322,9 @@ describe('Luggage-Trip Integration', () => {
         getMany: jest.fn().mockResolvedValue([]),
       };
 
-      luggageRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      luggageRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       const result = await luggageService.findByTrip(mockTrip.id, mockUser.id);
 
@@ -287,7 +344,9 @@ describe('Luggage-Trip Integration', () => {
         getMany: jest.fn().mockResolvedValue([]),
       };
 
-      luggageRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      luggageRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
       const filterDto = { limit: 5, offset: 10 };
       await luggageService.findByTrip(mockTrip.id, mockUser.id, filterDto);
@@ -313,17 +372,25 @@ describe('Luggage-Trip Integration', () => {
 
       // Mock trip access validation
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock luggage lookup with relations
       luggageRepository.findOne.mockResolvedValue(existingLuggage);
-      
+
       const updatedLuggage = { ...existingLuggage, ...updateLuggageDto };
       luggageRepository.preload.mockResolvedValue(updatedLuggage);
       luggageRepository.save.mockResolvedValue(updatedLuggage);
 
-      const result = await luggageService.updateForTrip('luggage-uuid', updateLuggageDto, mockTrip.id, mockUser.id);
+      const result = await luggageService.updateForTrip(
+        'luggage-uuid',
+        updateLuggageDto,
+        mockTrip.id,
+        mockUser.id,
+      );
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        mockUser.id,
+      );
       expect(luggageRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'luggage-uuid' },
         relations: { trip: true, user: true },
@@ -347,12 +414,17 @@ describe('Luggage-Trip Integration', () => {
 
       // Mock trip access validation - user can access current trip
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock luggage from different trip
       luggageRepository.findOne.mockResolvedValue(luggageFromOtherTrip);
 
       await expect(
-        luggageService.updateForTrip('luggage-uuid', updateLuggageDto, mockTrip.id, mockUser.id)
+        luggageService.updateForTrip(
+          'luggage-uuid',
+          updateLuggageDto,
+          mockTrip.id,
+          mockUser.id,
+        ),
       ).rejects.toThrow('Luggage does not belong to this trip');
 
       expect(luggageRepository.preload).not.toHaveBeenCalled();
@@ -371,14 +443,21 @@ describe('Luggage-Trip Integration', () => {
 
       // Mock trip access validation
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock luggage lookup
       luggageRepository.findOne.mockResolvedValue(luggageToRemove);
       luggageRepository.remove.mockResolvedValue(luggageToRemove);
 
-      await luggageService.removeFromTrip('luggage-uuid', mockTrip.id, mockUser.id);
+      await luggageService.removeFromTrip(
+        'luggage-uuid',
+        mockTrip.id,
+        mockUser.id,
+      );
 
-      expect(tripsService.findOne).toHaveBeenCalledWith(mockTrip.id, mockUser.id);
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        mockTrip.id,
+        mockUser.id,
+      );
       expect(luggageRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'luggage-uuid' },
         relations: { trip: true, user: true },
@@ -397,12 +476,12 @@ describe('Luggage-Trip Integration', () => {
 
       // Mock trip access validation
       jest.spyOn(tripsService, 'findOne').mockResolvedValue(mockTrip);
-      
+
       // Mock luggage from different trip
       luggageRepository.findOne.mockResolvedValue(luggageFromOtherTrip);
 
       await expect(
-        luggageService.removeFromTrip('luggage-uuid', mockTrip.id, mockUser.id)
+        luggageService.removeFromTrip('luggage-uuid', mockTrip.id, mockUser.id),
       ).rejects.toThrow('Luggage does not belong to this trip');
 
       expect(luggageRepository.remove).not.toHaveBeenCalled();
@@ -413,11 +492,13 @@ describe('Luggage-Trip Integration', () => {
     it('should allow trip participants to create luggage', async () => {
       const participantTrip = {
         ...mockTrip,
-        participants: [{
-          user: { id: 'participant-id' },
-          status: 'joined',
-          role: 'participant',
-        }],
+        participants: [
+          {
+            user: { id: 'participant-id' },
+            status: 'joined',
+            role: 'participant',
+          },
+        ],
       } as Trip;
 
       const createLuggageDto = {
@@ -440,10 +521,17 @@ describe('Luggage-Trip Integration', () => {
       luggageRepository.create.mockReturnValue(expectedLuggage);
       luggageRepository.save.mockResolvedValue(expectedLuggage);
 
-      const result = await luggageService.createForTrip(participantTrip.id, createLuggageDto, 'participant-id');
+      const result = await luggageService.createForTrip(
+        participantTrip.id,
+        createLuggageDto,
+        'participant-id',
+      );
 
       expect(result.trip.id).toBe(participantTrip.id);
-      expect(tripsService.findOne).toHaveBeenCalledWith(participantTrip.id, 'participant-id');
+      expect(tripsService.findOne).toHaveBeenCalledWith(
+        participantTrip.id,
+        'participant-id',
+      );
     });
   });
 });

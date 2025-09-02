@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  ParseUUIDPipe,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ItemCategoriesService } from './item-categories.service';
 import { CreateItemCategoryDto } from './dto/create-item-category.dto';
@@ -16,12 +27,18 @@ export class ItemCategoriesController {
   constructor(private readonly itemCategoriesService: ItemCategoriesService) {}
 
   @Post()
-  create(@Body() createItemCategoryDto: CreateItemCategoryDto, @CurrentUser() user: User) {
+  create(
+    @Body() createItemCategoryDto: CreateItemCategoryDto,
+    @CurrentUser() user: User,
+  ) {
     return this.itemCategoriesService.create(createItemCategoryDto);
   }
 
   @Get()
-  findAll(@Query() filterItemCategoryDto: FilterItemCategoryDto, @CurrentUser() user: User) {
+  findAll(
+    @Query() filterItemCategoryDto: FilterItemCategoryDto,
+    @CurrentUser() user: User,
+  ) {
     return this.itemCategoriesService.findAll(filterItemCategoryDto);
   }
 
@@ -32,9 +49,10 @@ export class ItemCategoriesController {
 
   @Patch(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateItemCategoryDto: UpdateItemCategoryDto,
-    @CurrentUser() user: User) {
+    @CurrentUser() user: User,
+  ) {
     return this.itemCategoriesService.update(id, updateItemCategoryDto);
   }
 

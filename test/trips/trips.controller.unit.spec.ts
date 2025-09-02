@@ -134,7 +134,11 @@ describe('TripsController Unit Tests', () => {
 
       const result = await controller.update('trip-1', updateDto, mockUser);
 
-      expect(service.update).toHaveBeenCalledWith('trip-1', updateDto, mockUser.id);
+      expect(service.update).toHaveBeenCalledWith(
+        'trip-1',
+        updateDto,
+        mockUser.id,
+      );
       expect(result).toEqual(updatedTrip);
     });
   });
@@ -157,9 +161,17 @@ describe('TripsController Unit Tests', () => {
 
       service.inviteParticipant.mockResolvedValue(mockParticipant as any);
 
-      const result = await controller.inviteParticipant('trip-1', inviteDto, mockUser);
+      const result = await controller.inviteParticipant(
+        'trip-1',
+        inviteDto,
+        mockUser,
+      );
 
-      expect(service.inviteParticipant).toHaveBeenCalledWith('trip-1', inviteDto, mockUser.id);
+      expect(service.inviteParticipant).toHaveBeenCalledWith(
+        'trip-1',
+        inviteDto,
+        mockUser.id,
+      );
       expect(result).toEqual(mockParticipant);
     });
 
@@ -189,9 +201,19 @@ describe('TripsController Unit Tests', () => {
 
       service.updateParticipantRole.mockResolvedValue(mockParticipant as any);
 
-      const result = await controller.updateParticipantRole('trip-1', 'participant-1', updateRoleDto, mockUser);
+      const result = await controller.updateParticipantRole(
+        'trip-1',
+        'participant-1',
+        updateRoleDto,
+        mockUser,
+      );
 
-      expect(service.updateParticipantRole).toHaveBeenCalledWith('trip-1', 'participant-1', updateRoleDto, mockUser.id);
+      expect(service.updateParticipantRole).toHaveBeenCalledWith(
+        'trip-1',
+        'participant-1',
+        updateRoleDto,
+        mockUser.id,
+      );
       expect(result).toEqual(mockParticipant);
     });
   });

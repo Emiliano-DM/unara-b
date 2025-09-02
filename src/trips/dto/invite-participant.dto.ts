@@ -1,12 +1,18 @@
-import { IsString, IsNotEmpty, IsUUID, IsOptional, IsIn } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
 
 export class InviteParticipantDto {
-    @IsUUID()
-    @IsNotEmpty()
-    userId: string;
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
 
-    @IsOptional()
-    @IsString()
-    @IsIn(['admin', 'participant'])
-    role?: string = 'participant';
+  @IsOptional()
+  @IsString()
+  @IsIn(['admin', 'participant'])
+  role?: string = 'participant';
 }

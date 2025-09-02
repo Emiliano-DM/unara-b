@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateLuggageCategoryDto } from './dto/create-luggage-category.dto';
 import { UpdateLuggageCategoryDto } from './dto/update-luggage-category.dto';
 import { LuggageCategory } from './entities/luggage-category.entity';
@@ -15,9 +20,13 @@ export class LuggageCategoriesService {
     private readonly luggageCategoryRepository: Repository<LuggageCategory>,
   ) {}
 
-  async create(createLuggageCategoryDto: CreateLuggageCategoryDto): Promise<LuggageCategory> {
+  async create(
+    createLuggageCategoryDto: CreateLuggageCategoryDto,
+  ): Promise<LuggageCategory> {
     try {
-      const luggageCategory = this.luggageCategoryRepository.create(createLuggageCategoryDto);
+      const luggageCategory = this.luggageCategoryRepository.create(
+        createLuggageCategoryDto,
+      );
       await this.luggageCategoryRepository.save(luggageCategory);
       return luggageCategory;
     } catch (error) {
@@ -25,22 +34,27 @@ export class LuggageCategoriesService {
     }
   }
 
-  async findAll(filterLuggageCategoryDto: FilterLuggageCategoryDto): Promise<LuggageCategory[]> {
-    const { 
-      limit = 10, 
+  async findAll(
+    filterLuggageCategoryDto: FilterLuggageCategoryDto,
+  ): Promise<LuggageCategory[]> {
+    const {
+      limit = 10,
       offset = 0,
       name,
       description,
     } = filterLuggageCategoryDto;
 
-    const query = this.luggageCategoryRepository.createQueryBuilder('luggageCategory');
+    const query =
+      this.luggageCategoryRepository.createQueryBuilder('luggageCategory');
 
     if (name) {
       query.andWhere('luggageCategory.name ILIKE :name', { name: `%${name}%` });
     }
 
     if (description) {
-      query.andWhere('luggageCategory.description ILIKE :description', { description: `%${description}%` });
+      query.andWhere('luggageCategory.description ILIKE :description', {
+        description: `%${description}%`,
+      });
     }
 
     query.skip(offset).take(limit);
@@ -49,7 +63,9 @@ export class LuggageCategoriesService {
   }
 
   async findOne(id: string): Promise<LuggageCategory> {
-    const luggageCategory = await this.luggageCategoryRepository.findOneBy({ id });
+    const luggageCategory = await this.luggageCategoryRepository.findOneBy({
+      id,
+    });
 
     if (!luggageCategory) {
       throw new NotFoundException(`Luggage category with id ${id} not found`);
@@ -58,7 +74,10 @@ export class LuggageCategoriesService {
     return luggageCategory;
   }
 
-  async update(id: string, updateLuggageCategoryDto: UpdateLuggageCategoryDto): Promise<LuggageCategory> {
+  async update(
+    id: string,
+    updateLuggageCategoryDto: UpdateLuggageCategoryDto,
+  ): Promise<LuggageCategory> {
     const luggageCategory = await this.luggageCategoryRepository.preload({
       id,
       ...updateLuggageCategoryDto,
@@ -77,7 +96,9 @@ export class LuggageCategoriesService {
   }
 
   async remove(id: string): Promise<void> {
-    const luggageCategory = await this.luggageCategoryRepository.findOneBy({ id });
+    const luggageCategory = await this.luggageCategoryRepository.findOneBy({
+      id,
+    });
 
     if (!luggageCategory) {
       throw new NotFoundException(`Luggage category with id ${id} not found`);
@@ -92,6 +113,8 @@ export class LuggageCategoriesService {
 
     this.logger.error(error);
 
-    throw new InternalServerErrorException('Unexpected error, check server logs');
+    throw new InternalServerErrorException(
+      'Unexpected error, check server logs',
+    );
   }
 }

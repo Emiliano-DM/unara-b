@@ -5,7 +5,11 @@ import { TripsService } from '../../src/trips/trips.service';
 import { Trip } from '../../src/trips/entities/trip.entity';
 import { TripParticipant } from '../../src/trips/entities/trip-participant.entity';
 import { User } from '../../src/users/entities/user.entity';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { TripStatus } from '../../src/common/enums/trip-status.enum';
 import { ParticipantRole } from '../../src/common/enums/participant-role.enum';
 import { ParticipantStatus } from '../../src/common/enums/participant-status.enum';
@@ -113,15 +117,22 @@ describe('TripsService Unit Tests', () => {
       const result = await service.create(createTripDto, mockUser.id);
 
       expect(result).toEqual(mockTrip);
-      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { id: mockUser.id } });
-      expect(tripRepository.create).toHaveBeenCalledWith({ ...createTripDto, owner: mockUser });
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+      });
+      expect(tripRepository.create).toHaveBeenCalledWith({
+        ...createTripDto,
+        owner: mockUser,
+      });
       expect(tripRepository.save).toHaveBeenCalledWith(mockTrip);
     });
 
     it('should throw NotFoundException if user not found', async () => {
       userRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.create({ name: 'Test' }, 'invalid-user')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.create({ name: 'Test' }, 'invalid-user'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -141,35 +152,46 @@ describe('TripsService Unit Tests', () => {
     it('should throw NotFoundException if trip not found or not public', async () => {
       tripRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findByShareToken('invalid-token')).rejects.toThrow(NotFoundException);
+      await expect(service.findByShareToken('invalid-token')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('inviteParticipant', () => {
     it('should throw ForbiddenException if user cannot invite', async () => {
-      const mockTripForInvite = { 
-        ...mockTrip, 
+      const mockTripForInvite = {
+        ...mockTrip,
         participants: [],
         generateShareToken: jest.fn(),
       };
       tripRepository.findOne.mockResolvedValue(mockTripForInvite);
-      
+
       const inviteDto = { userId: 'user-2' };
 
-      await expect(service.inviteParticipant('trip-1', inviteDto, 'unauthorized-user')).rejects.toThrow();
+      await expect(
+        service.inviteParticipant('trip-1', inviteDto, 'unauthorized-user'),
+      ).rejects.toThrow();
     });
   });
 
   describe('updateParticipantRole', () => {
     it('should throw ForbiddenException if user is not owner', async () => {
-      const nonOwnerTrip = { 
-        ...mockTrip, 
+      const nonOwnerTrip = {
+        ...mockTrip,
         owner: { ...mockUser, id: 'other-user' },
         generateShareToken: jest.fn(),
       };
       tripRepository.findOne.mockResolvedValue(nonOwnerTrip);
 
-      await expect(service.updateParticipantRole('trip-1', 'participant-1', { role: 'admin' }, mockUser.id)).rejects.toThrow();
+      await expect(
+        service.updateParticipantRole(
+          'trip-1',
+          'participant-1',
+          { role: 'admin' },
+          mockUser.id,
+        ),
+      ).rejects.toThrow();
     });
   });
 
@@ -186,7 +208,11 @@ describe('TripsService Unit Tests', () => {
       };
 
       userRepository.findOne.mockResolvedValue(mockUser);
-      const expectedTrip = { ...mockTrip, ...createTripDto, generateShareToken: jest.fn() };
+      const expectedTrip = {
+        ...mockTrip,
+        ...createTripDto,
+        generateShareToken: jest.fn(),
+      };
       tripRepository.create.mockReturnValue(expectedTrip as Trip);
       tripRepository.save.mockResolvedValue(expectedTrip as Trip);
       participantRepository.create.mockReturnValue({
@@ -198,7 +224,10 @@ describe('TripsService Unit Tests', () => {
       const result = await service.create(createTripDto, mockUser.id);
 
       expect(result).toEqual(expectedTrip);
-      expect(tripRepository.create).toHaveBeenCalledWith({ ...createTripDto, owner: mockUser });
+      expect(tripRepository.create).toHaveBeenCalledWith({
+        ...createTripDto,
+        owner: mockUser,
+      });
     });
   });
 
@@ -217,7 +246,9 @@ describe('TripsService Unit Tests', () => {
         generateShareToken: jest.fn(),
       };
 
-      tripRepository.findOne.mockResolvedValue(mockTripWithParticipants as Trip);
+      tripRepository.findOne.mockResolvedValue(
+        mockTripWithParticipants as Trip,
+      );
       userRepository.findOne.mockResolvedValue({ id: 'user-2' } as User);
       participantRepository.findOne.mockResolvedValue(null);
       participantRepository.create.mockReturnValue({
@@ -227,8 +258,12 @@ describe('TripsService Unit Tests', () => {
       participantRepository.save.mockResolvedValue({} as TripParticipant);
 
       const inviteDto = { userId: 'user-2', role: 'participant' };
-      
-      const result = await service.inviteParticipant('trip-1', inviteDto, mockUser.id);
+
+      const result = await service.inviteParticipant(
+        'trip-1',
+        inviteDto,
+        mockUser.id,
+      );
 
       expect(participantRepository.create).toHaveBeenCalledWith({
         trip: mockTripWithParticipants,
@@ -283,7 +318,7 @@ describe('TripsService Unit Tests', () => {
       };
 
       tripRepository.findOne.mockResolvedValue(fullTrip);
-      
+
       // This test would need additional logic in the service to check maxParticipants
       // For now, we're testing that the field is accessible
       expect(fullTrip.maxParticipants).toBe(2);

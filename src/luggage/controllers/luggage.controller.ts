@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { LuggageService } from '../services/luggage.service';
 import { CreateLuggageDto } from '../dto/create-luggage.dto';
@@ -16,12 +27,18 @@ export class LuggageController {
   constructor(private readonly luggageService: LuggageService) {}
 
   @Post()
-  create(@Body() createLuggageDto: CreateLuggageDto, @CurrentUser() user: User) {
+  create(
+    @Body() createLuggageDto: CreateLuggageDto,
+    @CurrentUser() user: User,
+  ) {
     return this.luggageService.create(createLuggageDto);
   }
 
   @Get()
-  findAll(@Query() filterLuggageDto: FilterLuggageDto, @CurrentUser() user: User) {
+  findAll(
+    @Query() filterLuggageDto: FilterLuggageDto,
+    @CurrentUser() user: User,
+  ) {
     return this.luggageService.findAll(filterLuggageDto);
   }
 
@@ -32,9 +49,10 @@ export class LuggageController {
 
   @Patch(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateLuggageDto: UpdateLuggageDto,
-    @CurrentUser() user: User) {
+    @CurrentUser() user: User,
+  ) {
     return this.luggageService.update(id, updateLuggageDto);
   }
 

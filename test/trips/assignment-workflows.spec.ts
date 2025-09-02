@@ -120,7 +120,7 @@ describe('Trip Assignment Workflows', () => {
       userRepository.findOne.mockResolvedValue(mockOwner);
       tripRepository.create.mockReturnValue(mockTrip);
       tripRepository.save.mockResolvedValue(mockTrip);
-      
+
       const mockOwnerParticipant = {
         trip: mockTrip,
         user: mockOwner,
@@ -129,9 +129,13 @@ describe('Trip Assignment Workflows', () => {
         invitedBy: mockOwner,
         joinedAt: expect.any(Date),
       };
-      
-      participantRepository.create.mockReturnValue(mockOwnerParticipant as TripParticipant);
-      participantRepository.save.mockResolvedValue(mockOwnerParticipant as TripParticipant);
+
+      participantRepository.create.mockReturnValue(
+        mockOwnerParticipant as TripParticipant,
+      );
+      participantRepository.save.mockResolvedValue(
+        mockOwnerParticipant as TripParticipant,
+      );
 
       await service.create(createTripDto, mockOwner.id);
 
@@ -148,11 +152,13 @@ describe('Trip Assignment Workflows', () => {
     it('should invite participant with correct role and INVITED status', async () => {
       const mockTripWithAccess = {
         ...mockTrip,
-        participants: [{
-          user: { id: mockOwner.id },
-          role: ParticipantRole.OWNER,
-          status: ParticipantStatus.JOINED,
-        }],
+        participants: [
+          {
+            user: { id: mockOwner.id },
+            role: ParticipantRole.OWNER,
+            status: ParticipantStatus.JOINED,
+          },
+        ],
         generateShareToken: jest.fn(),
       };
 
@@ -169,11 +175,19 @@ describe('Trip Assignment Workflows', () => {
         status: ParticipantStatus.INVITED,
       };
 
-      participantRepository.create.mockReturnValue(mockInvitedParticipant as TripParticipant);
-      participantRepository.save.mockResolvedValue(mockInvitedParticipant as TripParticipant);
+      participantRepository.create.mockReturnValue(
+        mockInvitedParticipant as TripParticipant,
+      );
+      participantRepository.save.mockResolvedValue(
+        mockInvitedParticipant as TripParticipant,
+      );
 
       const inviteDto = { userId: mockParticipant.id, role: 'participant' };
-      const result = await service.inviteParticipant(mockTrip.id, inviteDto, mockOwner.id);
+      const result = await service.inviteParticipant(
+        mockTrip.id,
+        inviteDto,
+        mockOwner.id,
+      );
 
       expect(participantRepository.create).toHaveBeenCalledWith({
         trip: mockTripWithAccess,
@@ -198,7 +212,9 @@ describe('Trip Assignment Workflows', () => {
       };
 
       tripRepository.findOne.mockResolvedValue(mockTripForRoleUpdate);
-      participantRepository.findOne.mockResolvedValue(mockExistingParticipant as TripParticipant);
+      participantRepository.findOne.mockResolvedValue(
+        mockExistingParticipant as TripParticipant,
+      );
       participantRepository.save.mockResolvedValue({
         ...mockExistingParticipant,
         role: ParticipantRole.ADMIN,
@@ -209,11 +225,13 @@ describe('Trip Assignment Workflows', () => {
         mockTrip.id,
         mockParticipant.id,
         updateRoleDto,
-        mockOwner.id
+        mockOwner.id,
       );
 
       expect(mockExistingParticipant.role).toBe(ParticipantRole.ADMIN);
-      expect(participantRepository.save).toHaveBeenCalledWith(mockExistingParticipant);
+      expect(participantRepository.save).toHaveBeenCalledWith(
+        mockExistingParticipant,
+      );
     });
 
     it('should prevent changing owner role', async () => {
@@ -230,17 +248,19 @@ describe('Trip Assignment Workflows', () => {
       };
 
       tripRepository.findOne.mockResolvedValue(mockTripForOwnerRoleUpdate);
-      participantRepository.findOne.mockResolvedValue(mockOwnerParticipant as TripParticipant);
+      participantRepository.findOne.mockResolvedValue(
+        mockOwnerParticipant as TripParticipant,
+      );
 
       const updateRoleDto = { role: 'admin' };
-      
+
       await expect(
         service.updateParticipantRole(
           mockTrip.id,
           mockOwner.id,
           updateRoleDto,
-          mockOwner.id
-        )
+          mockOwner.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -255,21 +275,27 @@ describe('Trip Assignment Workflows', () => {
 
       tripRepository.findOne.mockResolvedValue(mockTrip);
       userRepository.findOne.mockResolvedValue(mockParticipant);
-      participantRepository.findOne.mockResolvedValue(mockInvitedParticipant as TripParticipant);
-      
+      participantRepository.findOne.mockResolvedValue(
+        mockInvitedParticipant as TripParticipant,
+      );
+
       const mockJoinedParticipant = {
         ...mockInvitedParticipant,
         status: ParticipantStatus.JOINED,
         joinedAt: new Date(),
       };
-      
-      participantRepository.save.mockResolvedValue(mockJoinedParticipant as TripParticipant);
+
+      participantRepository.save.mockResolvedValue(
+        mockJoinedParticipant as TripParticipant,
+      );
 
       const result = await service.joinTrip(mockTrip.id, mockParticipant.id);
 
       expect(mockInvitedParticipant.status).toBe(ParticipantStatus.JOINED);
       expect(mockInvitedParticipant.joinedAt).toBeInstanceOf(Date);
-      expect(participantRepository.save).toHaveBeenCalledWith(mockInvitedParticipant);
+      expect(participantRepository.save).toHaveBeenCalledWith(
+        mockInvitedParticipant,
+      );
     });
 
     it('should allow joining public trips without invitation', async () => {
@@ -291,10 +317,17 @@ describe('Trip Assignment Workflows', () => {
         joinedAt: new Date(),
       };
 
-      participantRepository.create.mockReturnValue(mockNewParticipant as TripParticipant);
-      participantRepository.save.mockResolvedValue(mockNewParticipant as TripParticipant);
+      participantRepository.create.mockReturnValue(
+        mockNewParticipant as TripParticipant,
+      );
+      participantRepository.save.mockResolvedValue(
+        mockNewParticipant as TripParticipant,
+      );
 
-      const result = await service.joinTrip(mockPublicTrip.id, mockParticipant.id);
+      const result = await service.joinTrip(
+        mockPublicTrip.id,
+        mockParticipant.id,
+      );
 
       expect(participantRepository.create).toHaveBeenCalledWith({
         trip: mockPublicTrip,
@@ -317,7 +350,7 @@ describe('Trip Assignment Workflows', () => {
       participantRepository.findOne.mockResolvedValue(null); // No invitation
 
       await expect(
-        service.joinTrip(mockPrivateTrip.id, mockParticipant.id)
+        service.joinTrip(mockPrivateTrip.id, mockParticipant.id),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -373,9 +406,9 @@ describe('Trip Assignment Workflows', () => {
       };
 
       userRepository.findOne.mockResolvedValue(mockOwner);
-      
-      const comprehensiveTrip = { 
-        ...mockTrip, 
+
+      const comprehensiveTrip = {
+        ...mockTrip,
         ...comprehensiveCreateDto,
         generateShareToken: jest.fn(),
       };
@@ -403,7 +436,7 @@ describe('Trip Assignment Workflows', () => {
         TripStatus.COMPLETED,
       ];
 
-      statusProgression.forEach(status => {
+      statusProgression.forEach((status) => {
         const tripWithStatus = { ...mockTrip, status };
         expect(Object.values(TripStatus)).toContain(tripWithStatus.status);
       });
@@ -416,37 +449,41 @@ describe('Trip Assignment Workflows', () => {
       userRepository.findOne.mockResolvedValue(null); // User not found
 
       const inviteDto = { userId: 'non-existent-user' };
-      
+
       await expect(
-        service.inviteParticipant(mockTrip.id, inviteDto, mockOwner.id)
+        service.inviteParticipant(mockTrip.id, inviteDto, mockOwner.id),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should prevent duplicate invitations', async () => {
       const mockTripWithParticipant = {
         ...mockTrip,
-        participants: [{
-          user: { id: mockOwner.id },
-          role: ParticipantRole.OWNER,
-          status: ParticipantStatus.JOINED,
-        }],
+        participants: [
+          {
+            user: { id: mockOwner.id },
+            role: ParticipantRole.OWNER,
+            status: ParticipantStatus.JOINED,
+          },
+        ],
         generateShareToken: jest.fn(),
       };
 
       tripRepository.findOne.mockResolvedValue(mockTripWithParticipant);
       userRepository.findOne.mockResolvedValueOnce(mockParticipant);
       userRepository.findOne.mockResolvedValueOnce(mockOwner);
-      
+
       // User already has a participation record
       const existingParticipation = {
         status: ParticipantStatus.INVITED,
       };
-      participantRepository.findOne.mockResolvedValue(existingParticipation as TripParticipant);
+      participantRepository.findOne.mockResolvedValue(
+        existingParticipation as TripParticipant,
+      );
 
       const inviteDto = { userId: mockParticipant.id };
-      
+
       await expect(
-        service.inviteParticipant(mockTrip.id, inviteDto, mockOwner.id)
+        service.inviteParticipant(mockTrip.id, inviteDto, mockOwner.id),
       ).rejects.toThrow();
     });
   });

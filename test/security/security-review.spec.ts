@@ -15,7 +15,11 @@ import { LuggageCategory } from '../../src/luggage-categories/entities/luggage-c
 import { TripsModule } from '../../src/trips/trips.module';
 import { ItemsModule } from '../../src/items/items.module';
 import { LuggageModule } from '../../src/luggage/luggage.module';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 
 describe('Security Review - Trip Management', () => {
   let module: TestingModule;
@@ -45,7 +49,15 @@ describe('Security Review - Trip Management', () => {
           database: process.env.TEST_DB_NAME || 'unara_security_test',
           username: process.env.TEST_DB_USERNAME || 'postgres',
           password: process.env.TEST_DB_PASSWORD || 'password',
-          entities: [Trip, TripParticipant, User, Item, Luggage, ItemCategory, LuggageCategory],
+          entities: [
+            Trip,
+            TripParticipant,
+            User,
+            Item,
+            Luggage,
+            ItemCategory,
+            LuggageCategory,
+          ],
           synchronize: true,
           dropSchema: true,
           logging: false,
@@ -61,9 +73,15 @@ describe('Security Review - Trip Management', () => {
     luggageService = module.get<LuggageService>(LuggageService);
     tripRepository = module.get<Repository<Trip>>(getRepositoryToken(Trip));
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    participantRepository = module.get<Repository<TripParticipant>>(getRepositoryToken(TripParticipant));
-    itemCategoryRepository = module.get<Repository<ItemCategory>>(getRepositoryToken(ItemCategory));
-    luggageCategoryRepository = module.get<Repository<LuggageCategory>>(getRepositoryToken(LuggageCategory));
+    participantRepository = module.get<Repository<TripParticipant>>(
+      getRepositoryToken(TripParticipant),
+    );
+    itemCategoryRepository = module.get<Repository<ItemCategory>>(
+      getRepositoryToken(ItemCategory),
+    );
+    luggageCategoryRepository = module.get<Repository<LuggageCategory>>(
+      getRepositoryToken(LuggageCategory),
+    );
   });
 
   afterAll(async () => {
@@ -112,13 +130,20 @@ describe('Security Review - Trip Management', () => {
     });
 
     // Create test trip
-    testTrip = await tripsService.create({
-      name: 'Security Test Trip',
-      description: 'Testing security measures',
-    }, ownerUser.id);
+    testTrip = await tripsService.create(
+      {
+        name: 'Security Test Trip',
+        description: 'Testing security measures',
+      },
+      ownerUser.id,
+    );
 
     // Add participant to trip
-    await tripsService.inviteParticipant(testTrip.id, { userId: participantUser.id }, ownerUser.id);
+    await tripsService.inviteParticipant(
+      testTrip.id,
+      { userId: participantUser.id },
+      ownerUser.id,
+    );
     await tripsService.acceptInvitation(testTrip.id, participantUser.id);
   });
 
@@ -126,17 +151,21 @@ describe('Security Review - Trip Management', () => {
     it('should prevent unauthorized trip access', async () => {
       // Unauthorized user should not access trip
       await expect(
-        tripsService.findOne(testTrip.id, unauthorizedUser.id)
+        tripsService.findOne(testTrip.id, unauthorizedUser.id),
       ).rejects.toThrow(ForbiddenException);
 
       // Should not be able to update trip
       await expect(
-        tripsService.update(testTrip.id, { name: 'Hacked Trip' }, unauthorizedUser.id)
+        tripsService.update(
+          testTrip.id,
+          { name: 'Hacked Trip' },
+          unauthorizedUser.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       // Should not be able to delete trip
       await expect(
-        tripsService.remove(testTrip.id, unauthorizedUser.id)
+        tripsService.remove(testTrip.id, unauthorizedUser.id),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -147,7 +176,11 @@ describe('Security Review - Trip Management', () => {
 
       // But should not be able to invite others
       await expect(
-        tripsService.inviteParticipant(testTrip.id, { userId: unauthorizedUser.id }, participantUser.id)
+        tripsService.inviteParticipant(
+          testTrip.id,
+          { userId: unauthorizedUser.id },
+          participantUser.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       // Should not be able to change participant roles
@@ -156,26 +189,33 @@ describe('Security Review - Trip Management', () => {
       });
 
       await expect(
-        tripsService.updateParticipantRole(testTrip.id, participant!.id, { role: 'admin' }, participantUser.id)
+        tripsService.updateParticipantRole(
+          testTrip.id,
+          participant.id,
+          { role: 'admin' },
+          participantUser.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
     it('should validate share token access correctly', async () => {
       // Private trip should not be accessible via share token
       await expect(
-        tripsService.findByShareToken(testTrip.shareToken)
+        tripsService.findByShareToken(testTrip.shareToken),
       ).rejects.toThrow(NotFoundException);
 
       // Make trip public
       await tripsService.update(testTrip.id, { isPublic: true }, ownerUser.id);
 
       // Now should be accessible
-      const sharedTrip = await tripsService.findByShareToken(testTrip.shareToken);
+      const sharedTrip = await tripsService.findByShareToken(
+        testTrip.shareToken,
+      );
       expect(sharedTrip.id).toBe(testTrip.id);
 
       // Invalid token should fail
       await expect(
-        tripsService.findByShareToken('invalid-token')
+        tripsService.findByShareToken('invalid-token'),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -193,15 +233,14 @@ describe('Security Review - Trip Management', () => {
       for (const maliciousInput of maliciousInputs) {
         try {
           // These should not cause SQL injection or return unauthorized data
-          const results = await tripsService.findAll(ownerUser.id, { 
+          const results = await tripsService.findAll(ownerUser.id, {
             name: maliciousInput,
             limit: 10,
-            offset: 0 
+            offset: 0,
           });
-          
+
           // Should return empty or valid results, not error or unauthorized data
           expect(Array.isArray(results)).toBe(true);
-          
         } catch (error) {
           // If it throws, should be a validation error, not SQL error
           expect(error.message).not.toContain('syntax error');
@@ -221,7 +260,9 @@ describe('Security Review - Trip Management', () => {
       for (const invalidInput of invalidInputs) {
         try {
           await tripsService.create(invalidInput as any, ownerUser.id);
-          fail(`Should have failed validation for: ${JSON.stringify(invalidInput)}`);
+          fail(
+            `Should have failed validation for: ${JSON.stringify(invalidInput)}`,
+          );
         } catch (error) {
           // Should be validation error, not SQL error
           expect(error).toBeInstanceOf(BadRequestException);
@@ -231,29 +272,45 @@ describe('Security Review - Trip Management', () => {
 
     it('should prevent cross-trip data access', async () => {
       // Create another trip with different owner
-      const otherTrip = await tripsService.create({
-        name: 'Other User Trip',
-        description: 'Should not be accessible',
-      }, unauthorizedUser.id);
+      const otherTrip = await tripsService.create(
+        {
+          name: 'Other User Trip',
+          description: 'Should not be accessible',
+        },
+        unauthorizedUser.id,
+      );
 
       // Create items in both trips
-      const ownerItem = await itemsService.createForTrip(testTrip.id, {
-        name: 'Owner Item',
-        categoryId: itemCategory.id,
-      }, ownerUser.id);
+      const ownerItem = await itemsService.createForTrip(
+        testTrip.id,
+        {
+          name: 'Owner Item',
+          categoryId: itemCategory.id,
+        },
+        ownerUser.id,
+      );
 
-      const otherItem = await itemsService.createForTrip(otherTrip.id, {
-        name: 'Other Item',
-        categoryId: itemCategory.id,
-      }, unauthorizedUser.id);
+      const otherItem = await itemsService.createForTrip(
+        otherTrip.id,
+        {
+          name: 'Other Item',
+          categoryId: itemCategory.id,
+        },
+        unauthorizedUser.id,
+      );
 
       // User should not be able to access items from other trip
       await expect(
-        itemsService.updateForTrip(otherItem.id, { name: 'Hacked' }, testTrip.id, ownerUser.id)
+        itemsService.updateForTrip(
+          otherItem.id,
+          { name: 'Hacked' },
+          testTrip.id,
+          ownerUser.id,
+        ),
       ).rejects.toThrow(BadRequestException);
 
       await expect(
-        itemsService.removeFromTrip(otherItem.id, testTrip.id, ownerUser.id)
+        itemsService.removeFromTrip(otherItem.id, testTrip.id, ownerUser.id),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -265,18 +322,18 @@ describe('Security Review - Trip Management', () => {
         shareToken: '',
       }));
 
-      trips.forEach(trip => {
+      trips.forEach((trip) => {
         const mockTrip = new Trip();
         mockTrip.generateShareToken();
         trip.shareToken = mockTrip.shareToken;
       });
 
       // All tokens should be unique
-      const uniqueTokens = new Set(trips.map(t => t.shareToken));
+      const uniqueTokens = new Set(trips.map((t) => t.shareToken));
       expect(uniqueTokens.size).toBe(10);
 
       // Tokens should be hex strings of appropriate length
-      trips.forEach(trip => {
+      trips.forEach((trip) => {
         expect(trip.shareToken).toMatch(/^[a-f0-9]{32}$/);
       });
     });
@@ -284,14 +341,17 @@ describe('Security Review - Trip Management', () => {
     it('should not expose share tokens in unauthorized contexts', async () => {
       // Unauthorized user should not see share token even if trip exists
       await expect(
-        tripsService.findOne(testTrip.id, unauthorizedUser.id)
+        tripsService.findOne(testTrip.id, unauthorizedUser.id),
       ).rejects.toThrow(ForbiddenException);
 
       // Share token should only be visible to participants
       const ownerView = await tripsService.findOne(testTrip.id, ownerUser.id);
       expect(ownerView.shareToken).toBeDefined();
 
-      const participantView = await tripsService.findOne(testTrip.id, participantUser.id);
+      const participantView = await tripsService.findOne(
+        testTrip.id,
+        participantUser.id,
+      );
       expect(participantView.shareToken).toBeDefined();
     });
 
@@ -307,7 +367,7 @@ describe('Security Review - Trip Management', () => {
 
       for (const invalidToken of invalidTokens) {
         await expect(
-          tripsService.findByShareToken(invalidToken as any)
+          tripsService.findByShareToken(invalidToken as any),
         ).rejects.toThrow(NotFoundException);
       }
     });
@@ -317,7 +377,7 @@ describe('Security Review - Trip Management', () => {
     it('should enforce unique constraints properly', async () => {
       // Share tokens should be unique
       const existingToken = testTrip.shareToken;
-      
+
       // Try to create trip with same share token (manually)
       await expect(async () => {
         const newTrip = tripRepository.create({
@@ -332,7 +392,11 @@ describe('Security Review - Trip Management', () => {
     it('should prevent duplicate participants', async () => {
       // User should not be able to join trip twice
       await expect(
-        tripsService.inviteParticipant(testTrip.id, { userId: participantUser.id }, ownerUser.id)
+        tripsService.inviteParticipant(
+          testTrip.id,
+          { userId: participantUser.id },
+          ownerUser.id,
+        ),
       ).rejects.toThrow(); // Should fail because user is already a participant
 
       // Database should enforce unique constraint
@@ -344,21 +408,29 @@ describe('Security Review - Trip Management', () => {
       });
 
       await expect(
-        participantRepository.save(duplicateParticipant)
+        participantRepository.save(duplicateParticipant),
       ).rejects.toThrow();
     });
 
     it('should handle cascade deletes securely', async () => {
       // Create items and luggage for trip
-      const item = await itemsService.createForTrip(testTrip.id, {
-        name: 'Test Item',
-        categoryId: itemCategory.id,
-      }, ownerUser.id);
+      const item = await itemsService.createForTrip(
+        testTrip.id,
+        {
+          name: 'Test Item',
+          categoryId: itemCategory.id,
+        },
+        ownerUser.id,
+      );
 
-      const luggage = await luggageService.createForTrip(testTrip.id, {
-        name: 'Test Luggage',
-        categoryId: luggageCategory.id,
-      }, ownerUser.id);
+      const luggage = await luggageService.createForTrip(
+        testTrip.id,
+        {
+          name: 'Test Luggage',
+          categoryId: luggageCategory.id,
+        },
+        ownerUser.id,
+      );
 
       // Delete trip should cascade to participants, items, and luggage
       await tripsService.remove(testTrip.id, ownerUser.id);
@@ -371,7 +443,7 @@ describe('Security Review - Trip Management', () => {
 
       // Items and luggage should also be deleted
       await expect(
-        itemsService.findByTrip(testTrip.id, ownerUser.id)
+        itemsService.findByTrip(testTrip.id, ownerUser.id),
       ).rejects.toThrow();
     });
   });
@@ -384,29 +456,47 @@ describe('Security Review - Trip Management', () => {
       });
 
       await expect(
-        tripsService.updateParticipantRole(testTrip.id, participant!.id, { role: 'owner' }, participantUser.id)
+        tripsService.updateParticipantRole(
+          testTrip.id,
+          participant.id,
+          { role: 'owner' },
+          participantUser.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       // Should not be able to promote other participants
       await expect(
-        tripsService.updateParticipantRole(testTrip.id, participant!.id, { role: 'admin' }, participantUser.id)
+        tripsService.updateParticipantRole(
+          testTrip.id,
+          participant.id,
+          { role: 'admin' },
+          participantUser.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
     it('should prevent unauthorized trip modifications', async () => {
       // Participant should not be able to change trip ownership
       await expect(
-        tripsService.update(testTrip.id, { owner: participantUser } as any, participantUser.id)
+        tripsService.update(
+          testTrip.id,
+          { owner: participantUser } as any,
+          participantUser.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       // Should not be able to delete trip
       await expect(
-        tripsService.remove(testTrip.id, participantUser.id)
+        tripsService.remove(testTrip.id, participantUser.id),
       ).rejects.toThrow(ForbiddenException);
 
       // Should not be able to change sensitive settings
       await expect(
-        tripsService.update(testTrip.id, { shareToken: 'hacked-token' } as any, participantUser.id)
+        tripsService.update(
+          testTrip.id,
+          { shareToken: 'hacked-token' } as any,
+          participantUser.id,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -426,13 +516,13 @@ describe('Security Review - Trip Management', () => {
 
     it('should filter sensitive data in API responses', async () => {
       const trip = await tripsService.findOne(testTrip.id, ownerUser.id);
-      
+
       // Should not expose internal IDs or sensitive user data
       expect(trip.owner.password).toBeUndefined();
-      
+
       // Participants should not expose sensitive user data
       if (trip.participants?.length > 0) {
-        trip.participants.forEach(participant => {
+        trip.participants.forEach((participant) => {
           expect(participant.user.password).toBeUndefined();
         });
       }

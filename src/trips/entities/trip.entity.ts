@@ -40,7 +40,7 @@ export class Trip {
   @Column({
     type: 'enum',
     enum: TripStatus,
-    default: TripStatus.PLANNING
+    default: TripStatus.PLANNING,
   })
   status: TripStatus;
 
@@ -89,15 +89,15 @@ export class Trip {
   @Column({ type: 'text', nullable: true })
   requirements?: string;
 
-  @OneToMany(() => TripParticipant, participant => participant.trip, {
+  @OneToMany(() => TripParticipant, (participant) => participant.trip, {
     cascade: true,
   })
   participants: TripParticipant[];
 
-  @OneToMany(() => Luggage, luggage => luggage.trip)
+  @OneToMany(() => Luggage, (luggage) => luggage.trip)
   luggage: Luggage[];
 
-  @OneToMany(() => Item, item => item.trip)
+  @OneToMany(() => Item, (item) => item.trip)
   items: Item[];
 
   @CreateDateColumn()

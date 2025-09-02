@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Trip } from './entities/trip.entity';
@@ -25,7 +30,7 @@ export class TripsService {
 
   async create(createTripDto: CreateTripDto, ownerId: string): Promise<Trip> {
     const owner = await this.userRepository.findOne({
-      where: { id: ownerId }
+      where: { id: ownerId },
     });
 
     if (!owner) {
@@ -55,15 +60,20 @@ export class TripsService {
   }
 
   async findAll(userId: string, filters?: FilterTripDto): Promise<Trip[]> {
-    const query = this.tripRepository.createQueryBuilder('trip')
+    const query = this.tripRepository
+      .createQueryBuilder('trip')
       .leftJoinAndSelect('trip.owner', 'owner')
       .leftJoin('trip.participants', 'participant')
-      .where('(trip.owner.id = :userId OR (participant.user.id = :userId AND participant.status = :joinedStatus))', 
-        { userId, joinedStatus: ParticipantStatus.JOINED });
+      .where(
+        '(trip.owner.id = :userId OR (participant.user.id = :userId AND participant.status = :joinedStatus))',
+        { userId, joinedStatus: ParticipantStatus.JOINED },
+      );
 
     if (filters?.search) {
-      query.andWhere('(trip.name ILIKE :search OR trip.description ILIKE :search OR trip.destination ILIKE :search)', 
-        { search: `%${filters.search}%` });
+      query.andWhere(
+        '(trip.name ILIKE :search OR trip.description ILIKE :search OR trip.destination ILIKE :search)',
+        { search: `%${filters.search}%` },
+      );
     }
 
     if (filters?.status) {
@@ -71,16 +81,21 @@ export class TripsService {
     }
 
     if (filters?.destination) {
-      query.andWhere('trip.destination ILIKE :destination', 
-        { destination: `%${filters.destination}%` });
+      query.andWhere('trip.destination ILIKE :destination', {
+        destination: `%${filters.destination}%`,
+      });
     }
 
     if (filters?.startDateFrom) {
-      query.andWhere('trip.startDate >= :startDateFrom', { startDateFrom: filters.startDateFrom });
+      query.andWhere('trip.startDate >= :startDateFrom', {
+        startDateFrom: filters.startDateFrom,
+      });
     }
 
     if (filters?.startDateTo) {
-      query.andWhere('trip.startDate <= :startDateTo', { startDateTo: filters.startDateTo });
+      query.andWhere('trip.startDate <= :startDateTo', {
+        startDateTo: filters.startDateTo,
+      });
     }
 
     if (filters?.isOwner === true) {
@@ -88,8 +103,10 @@ export class TripsService {
     }
 
     if (filters?.isParticipant === true) {
-      query.andWhere('participant.user.id = :userId AND participant.status = :joinedStatus', 
-        { userId, joinedStatus: ParticipantStatus.JOINED });
+      query.andWhere(
+        'participant.user.id = :userId AND participant.status = :joinedStatus',
+        { userId, joinedStatus: ParticipantStatus.JOINED },
+      );
     }
 
     // Pagination
@@ -117,8 +134,11 @@ export class TripsService {
     }
 
     // Check if user has access to this trip
-    const hasAccess = trip.owner.id === userId || 
-      trip.participants.some(p => p.user.id === userId && p.status === ParticipantStatus.JOINED);
+    const hasAccess =
+      trip.owner.id === userId ||
+      trip.participants.some(
+        (p) => p.user.id === userId && p.status === ParticipantStatus.JOINED,
+      );
 
     if (!hasAccess) {
       throw new ForbiddenException('Access denied');
@@ -140,15 +160,27 @@ export class TripsService {
     return trip;
   }
 
-  async update(id: string, updateTripDto: UpdateTripDto, userId: string): Promise<Trip> {
+  async update(
+    id: string,
+    updateTripDto: UpdateTripDto,
+    userId: string,
+  ): Promise<Trip> {
     const trip = await this.findOne(id, userId);
 
     // Check if user can update (owner or admin)
-    const canUpdate = trip.owner.id === userId || 
-      trip.participants.some(p => p.user.id === userId && p.role === ParticipantRole.ADMIN && p.status === ParticipantStatus.JOINED);
+    const canUpdate =
+      trip.owner.id === userId ||
+      trip.participants.some(
+        (p) =>
+          p.user.id === userId &&
+          p.role === ParticipantRole.ADMIN &&
+          p.status === ParticipantStatus.JOINED,
+      );
 
     if (!canUpdate) {
-      throw new ForbiddenException('Only trip owner or admins can update trip details');
+      throw new ForbiddenException(
+        'Only trip owner or admins can update trip details',
+      );
     }
 
     Object.assign(trip, updateTripDto);
@@ -166,20 +198,32 @@ export class TripsService {
     await this.tripRepository.remove(trip);
   }
 
-  async inviteParticipant(tripId: string, inviteDto: InviteParticipantDto, inviterId: string): Promise<TripParticipant> {
+  async inviteParticipant(
+    tripId: string,
+    inviteDto: InviteParticipantDto,
+    inviterId: string,
+  ): Promise<TripParticipant> {
     const trip = await this.findOne(tripId, inviterId);
 
     // Check if inviter can invite (owner or admin)
-    const canInvite = trip.owner.id === inviterId || 
-      trip.participants.some(p => p.user.id === inviterId && p.role === ParticipantRole.ADMIN && p.status === ParticipantStatus.JOINED);
+    const canInvite =
+      trip.owner.id === inviterId ||
+      trip.participants.some(
+        (p) =>
+          p.user.id === inviterId &&
+          p.role === ParticipantRole.ADMIN &&
+          p.status === ParticipantStatus.JOINED,
+      );
 
     if (!canInvite) {
-      throw new ForbiddenException('Only trip owner or admins can invite participants');
+      throw new ForbiddenException(
+        'Only trip owner or admins can invite participants',
+      );
     }
 
     // Check if user exists
     const userToInvite = await this.userRepository.findOne({
-      where: { id: inviteDto.userId }
+      where: { id: inviteDto.userId },
     });
 
     if (!userToInvite) {
@@ -188,15 +232,18 @@ export class TripsService {
 
     // Check if user is already a participant
     const existingParticipant = await this.participantRepository.findOne({
-      where: { trip: { id: tripId }, user: { id: inviteDto.userId } }
+      where: { trip: { id: tripId }, user: { id: inviteDto.userId } },
     });
 
-    if (existingParticipant && existingParticipant.status !== ParticipantStatus.LEFT) {
+    if (
+      existingParticipant &&
+      existingParticipant.status !== ParticipantStatus.LEFT
+    ) {
       throw new BadRequestException('User is already a participant');
     }
 
     const inviter = await this.userRepository.findOne({
-      where: { id: inviterId }
+      where: { id: inviterId },
     });
 
     if (!inviter) {
@@ -227,7 +274,7 @@ export class TripsService {
 
     // Check if user exists
     const user = await this.userRepository.findOne({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!user) {
@@ -279,7 +326,9 @@ export class TripsService {
     }
 
     if (trip.owner.id === userId) {
-      throw new ForbiddenException('Trip owner cannot leave the trip. Transfer ownership first.');
+      throw new ForbiddenException(
+        'Trip owner cannot leave the trip. Transfer ownership first.',
+      );
     }
 
     const participant = await this.participantRepository.findOne({
@@ -300,12 +349,19 @@ export class TripsService {
     await this.participantRepository.remove(participant);
   }
 
-  async updateParticipantRole(tripId: string, participantUserId: string, updateDto: UpdateParticipantRoleDto, ownerId: string): Promise<TripParticipant> {
+  async updateParticipantRole(
+    tripId: string,
+    participantUserId: string,
+    updateDto: UpdateParticipantRoleDto,
+    ownerId: string,
+  ): Promise<TripParticipant> {
     const trip = await this.findOne(tripId, ownerId);
 
     // Only owner can update roles
     if (trip.owner.id !== ownerId) {
-      throw new ForbiddenException('Only trip owner can update participant roles');
+      throw new ForbiddenException(
+        'Only trip owner can update participant roles',
+      );
     }
 
     const participant = await this.participantRepository.findOne({

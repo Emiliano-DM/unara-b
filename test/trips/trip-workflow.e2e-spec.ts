@@ -42,7 +42,15 @@ describe('Complete Trip Workflow (e2e)', () => {
           database: process.env.TEST_DB_NAME || 'unara_test_e2e',
           username: process.env.TEST_DB_USERNAME || 'postgres',
           password: process.env.TEST_DB_PASSWORD || 'password',
-          entities: [Trip, TripParticipant, User, Item, Luggage, ItemCategory, LuggageCategory],
+          entities: [
+            Trip,
+            TripParticipant,
+            User,
+            Item,
+            Luggage,
+            ItemCategory,
+            LuggageCategory,
+          ],
           synchronize: true,
           dropSchema: true,
           logging: false,
@@ -58,13 +66,27 @@ describe('Complete Trip Workflow (e2e)', () => {
     await app.init();
 
     // Get repositories
-    tripRepository = moduleFixture.get<Repository<Trip>>(getRepositoryToken(Trip));
-    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
-    participantRepository = moduleFixture.get<Repository<TripParticipant>>(getRepositoryToken(TripParticipant));
-    itemRepository = moduleFixture.get<Repository<Item>>(getRepositoryToken(Item));
-    luggageRepository = moduleFixture.get<Repository<Luggage>>(getRepositoryToken(Luggage));
-    itemCategoryRepository = moduleFixture.get<Repository<ItemCategory>>(getRepositoryToken(ItemCategory));
-    luggageCategoryRepository = moduleFixture.get<Repository<LuggageCategory>>(getRepositoryToken(LuggageCategory));
+    tripRepository = moduleFixture.get<Repository<Trip>>(
+      getRepositoryToken(Trip),
+    );
+    userRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
+    participantRepository = moduleFixture.get<Repository<TripParticipant>>(
+      getRepositoryToken(TripParticipant),
+    );
+    itemRepository = moduleFixture.get<Repository<Item>>(
+      getRepositoryToken(Item),
+    );
+    luggageRepository = moduleFixture.get<Repository<Luggage>>(
+      getRepositoryToken(Luggage),
+    );
+    itemCategoryRepository = moduleFixture.get<Repository<ItemCategory>>(
+      getRepositoryToken(ItemCategory),
+    );
+    luggageCategoryRepository = moduleFixture.get<Repository<LuggageCategory>>(
+      getRepositoryToken(LuggageCategory),
+    );
   });
 
   afterAll(async () => {
@@ -312,7 +334,10 @@ describe('Complete Trip Workflow (e2e)', () => {
 
       // Verify participant was added
       const participant = await participantRepository.findOne({
-        where: { trip: { id: publicTrip.id }, user: { id: testParticipant.id } },
+        where: {
+          trip: { id: publicTrip.id },
+          user: { id: testParticipant.id },
+        },
       });
       expect(participant?.status).toBe('joined');
     });
@@ -342,11 +367,13 @@ describe('Complete Trip Workflow (e2e)', () => {
             name: `Concurrent Item ${i}`,
             categoryId: itemCategory.id,
           })
-          .set('user-id', testOwner.id)
+          .set('user-id', testOwner.id),
       );
 
       const itemResults = await Promise.allSettled(itemPromises);
-      const successfulItems = itemResults.filter(result => result.status === 'fulfilled');
+      const successfulItems = itemResults.filter(
+        (result) => result.status === 'fulfilled',
+      );
 
       // All items should be created successfully
       expect(successfulItems).toHaveLength(5);
