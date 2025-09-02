@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Luggage } from "./luggage.entity";
-import { Item } from "src/items/entities/item.entity";
+import { Item } from "../../items/entities/item.entity";
 
 @Entity()
 export class LuggageItem {

@@ -13,6 +13,7 @@ import { User } from '../../users/entities/user.entity';
 import { TripParticipant } from './trip-participant.entity';
 import { Luggage } from '../../luggage/entities/luggage.entity';
 import { Item } from '../../items/entities/item.entity';
+import { TripStatus } from 'src/common/enums/trip-status.enum';
 import { randomBytes } from 'crypto';
 
 @Entity()
@@ -36,12 +37,12 @@ export class Trip {
   endDate?: Date;
 
   @Index()
-  @Column({ 
-    type: 'varchar', 
-    length: 50, 
-    default: 'planning' 
+  @Column({
+    type: 'enum',
+    enum: TripStatus,
+    default: TripStatus.PLANNING
   })
-  status: string;
+  status: TripStatus;
 
   @Index()
   @ManyToOne(() => User, { nullable: false, eager: true })
@@ -54,6 +55,39 @@ export class Trip {
   @Index()
   @Column({ type: 'varchar', length: 100, unique: true })
   shareToken: string;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  budget?: number;
+
+  @Column({ type: 'varchar', length: 10, default: 'USD' })
+  currency: string;
+
+  @Column({ type: 'int', nullable: true })
+  maxParticipants?: number;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  category?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  departureLocation?: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  timeZone?: string;
+
+  @Column({ type: 'json', nullable: true })
+  coordinates?: string;
+
+  @Column({ type: 'text', nullable: true })
+  accommodation?: string;
+
+  @Column({ type: 'text', nullable: true })
+  transportation?: string;
+
+  @Column({ type: 'date', nullable: true })
+  bookingDeadline?: Date;
+
+  @Column({ type: 'text', nullable: true })
+  requirements?: string;
 
   @OneToMany(() => TripParticipant, participant => participant.trip, {
     cascade: true,

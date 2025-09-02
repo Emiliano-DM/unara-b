@@ -10,6 +10,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Trip } from './trip.entity';
+import { ParticipantRole } from 'src/common/enums/participant-role.enum';
+import { ParticipantStatus } from 'src/common/enums/participant-status.enum';
 
 @Entity()
 @Unique(['trip', 'user'])
@@ -27,20 +29,20 @@ export class TripParticipant {
   @ManyToOne(() => User, { nullable: false })
   user: User;
 
-  @Column({ 
-    type: 'varchar', 
-    length: 50, 
-    default: 'participant' 
+  @Column({
+    type: 'enum',
+    enum: ParticipantRole,
+    default: ParticipantRole.PARTICIPANT
   })
-  role: string; // owner, admin, participant
+  role: ParticipantRole;
 
   @Index()
-  @Column({ 
-    type: 'varchar', 
-    length: 50, 
-    default: 'invited' 
+  @Column({
+    type: 'enum',
+    enum: ParticipantStatus,
+    default: ParticipantStatus.INVITED
   })
-  status: string; // invited, joined, left
+  status: ParticipantStatus;
 
   @ManyToOne(() => User, { nullable: false })
   invitedBy: User;

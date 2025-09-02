@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { LuggageService } from './services/luggage.service';
 import { LuggageController } from './controllers/luggage.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -28,7 +28,8 @@ import { TripsModule } from '../trips/trips.module';
     ]),
     LuggageCategoriesModule,
     ItemsModule,
-    TripsModule,
-  ]
+    forwardRef(() => TripsModule),
+  ],
+  exports: [LuggageService],
 })
 export class LuggageModule {}

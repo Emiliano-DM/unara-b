@@ -9,88 +9,121 @@ import { FilterUserDto } from './dto/filter-user.dto';
 @Injectable()
 export class UsersService {
   
-  private readonly logger = new Logger('LuggageService')
+  private readonly logger = new Logger('UsersService');
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
-  ){}
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const user = this.userRepository.create(createUserDto)
-      await this.userRepository.save(user)
-      return user
+      // Handle fullname generation from firstName and lastName
+      let fullname = createUserDto.fullname;
+      if (!fullname && createUserDto.firstName && createUserDto.lastName) {
+        fullname = `${createUserDto.firstName} ${createUserDto.lastName}`;
+      } else if (!fullname && createUserDto.firstName) {
+        fullname = createUserDto.firstName;
+      } else if (!fullname && createUserDto.lastName) {
+        fullname = createUserDto.lastName;
+      }
 
+      const userData = {
+        ...createUserDto,
+        fullname,
+        firstName: createUserDto.firstName,
+        lastName: createUserDto.lastName,
+      };
+
+      const user = this.userRepository.create(userData);
+      await this.userRepository.save(user);
+      return user;
     } catch (error) {
-      this.handleExceptions(error)
+      this.handleExceptions(error);
     }
   }
 
-  async findAll(filterUserDto: FilterUserDto) {
+  async findAll(filterUserDto: FilterUserDto): Promise<User[]> {
     const { 
       limit = 10, 
       offset = 0,
       email,
       username,
-    } = filterUserDto
+    } = filterUserDto;
 
-    const query = this.userRepository.createQueryBuilder('user')
+    const query = this.userRepository.createQueryBuilder('user');
 
-    if (email) query.andWhere('user.email ILIKE :email', { email: `%${email}%`})
+    if (email) {
+      query.andWhere('user.email ILIKE :email', { email: `%${email}%` });
+    }
     
-    if (username) query.andWhere('user.username ILIKE :username', { username: `%${username}%`})
-
-    query.skip(offset).take(limit)
-
-    return query.getMany()
-  }
-
-  async findOne(id: string) {
-    const user = await this.userRepository.findOneBy({ id })
-
-    if (!user){
-      throw new NotFoundException(`User with id ${id} not found`)
+    if (username) {
+      query.andWhere('user.username ILIKE :username', { username: `%${username}%` });
     }
 
-    return user
+    query.skip(offset).take(limit);
+
+    return query.getMany();
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async findOne(id: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    return user;
+  }
+
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.userRepository.preload({
       id,
-      ...updateUserDto
-    })
+      ...updateUserDto,
+    });
 
-    if (!user){
-      throw new NotFoundException(`User with id ${id} not found`)
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
     }
 
     try {
-      await this.userRepository.save(user)
-      return user
-    
+      await this.userRepository.save(user);
+      return user;
     } catch (error) {
-      this.handleExceptions(error)
+      this.handleExceptions(error);
     }
   }
 
-  async remove(id: string) {
-    const user = await this.userRepository.findOneBy({ id })
+  async remove(id: string): Promise<void> {
+    const user = await this.userRepository.findOneBy({ id });
 
-    if (!user){
-      throw new NotFoundException(`User with id ${id} not found`)
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    this.userRepository.remove(user)
+    await this.userRepository.remove(user);
   }
 
-  private handleExceptions(error: any){
-    // TODO: Añadir los códigos de error que veamos que se van dando
+  async findByEmail(email: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { email } });
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { username } });
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return await this.userRepository.findOne({ 
+      where: { passwordResetToken: token } 
+    });
+  }
+
+  private handleExceptions(error: any): never {
+    // TODO: Add error codes as they are encountered
     // if (error.code === 0) throw new BadRequestException(error.detail)
 
-    this.logger.error(error)
+    this.logger.error(error);
 
-    throw new InternalServerErrorException('Unexpected error, check server logs')
+    throw new InternalServerErrorException('Unexpected error, check server logs');
   }
 }

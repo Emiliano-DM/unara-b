@@ -11,7 +11,7 @@ import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ItemsService {
-  private readonly logger = new Logger('ItemsService')
+  private readonly logger = new Logger('ItemsService');
 
   constructor(
     @InjectRepository(Item)
@@ -24,100 +24,106 @@ export class ItemsService {
     private readonly userRepository: Repository<User>,
 
     private readonly tripsService: TripsService,
-  ){}
+  ) {}
 
-  async create(createItemDto: CreateItemDto) {
-    const { categoryId, ...itemData } = createItemDto
+  async create(createItemDto: CreateItemDto): Promise<Item> {
+    const { categoryId, ...itemData } = createItemDto;
 
-    const category = await this.itemCategoryRepository.findOneBy({ id: categoryId })
+    const category = await this.itemCategoryRepository.findOneBy({ id: categoryId });
 
-    if (!category) throw new NotFoundException(`Category with id ${categoryId} not found`)
+    if (!category) {
+      throw new NotFoundException(`Category with id ${categoryId} not found`);
+    }
 
     try {
       const item = this.itemRepository.create({
         ...itemData,
-        category
-      })
+        category,
+      });
 
-      await this.itemRepository.save(item)
-      return item
-
+      await this.itemRepository.save(item);
+      return item;
     } catch (error) {
-      this.handleExceptions(error)
+      this.handleExceptions(error);
     }
   }
 
-  async findAll(filterItemDto: FilterItemDto) {
+  async findAll(filterItemDto: FilterItemDto): Promise<Item[]> {
     const { 
       limit = 10, 
       offset = 0,
       name,
       categoryId,
-    } = filterItemDto
+    } = filterItemDto;
 
     const query = this.itemRepository
                       .createQueryBuilder('item')
-                      .leftJoinAndSelect('item.category', 'category')
+                      .leftJoinAndSelect('item.category', 'category');
 
-    if (name) query.andWhere('item.name ILIKE :name', { name: `%${name}%`})
-
-    if (categoryId) query.andWhere('category.id = :categoryId', { categoryId})
-
-    query.skip(offset).take(limit)
-
-    return query.getMany()
-  }
-
-  async findOne(id: string) {
-    const item = await this.itemRepository.findOne({ 
-      where: { id },
-      relations: {  category: true }
-    })
-
-    if (!item){
-      throw new NotFoundException(`Item with id ${id} not found`)
+    if (name) {
+      query.andWhere('item.name ILIKE :name', { name: `%${name}%` });
     }
 
-    return item
+    if (categoryId) {
+      query.andWhere('category.id = :categoryId', { categoryId });
+    }
+
+    query.skip(offset).take(limit);
+
+    return query.getMany();
   }
 
-  async update(id: string, updateItemDto: UpdateItemDto) {
+  async findOne(id: string): Promise<Item> {
+    const item = await this.itemRepository.findOne({ 
+      where: { id },
+      relations: { category: true },
+    });
+
+    if (!item) {
+      throw new NotFoundException(`Item with id ${id} not found`);
+    }
+
+    return item;
+  }
+
+  async update(id: string, updateItemDto: UpdateItemDto): Promise<Item> {
     const { categoryId, ...itemData } = updateItemDto;
 
     let category: ItemCategory | null = null;
     if (categoryId) {
-      category = await this.itemCategoryRepository.findOneBy({ id: categoryId })
+      category = await this.itemCategoryRepository.findOneBy({ id: categoryId });
 
-      if (!category) throw new NotFoundException(`Category with id ${categoryId} not found`)
+      if (!category) {
+        throw new NotFoundException(`Category with id ${categoryId} not found`);
+      }
     }
 
     const item = await this.itemRepository.preload({
       id,
       ...itemData,
       ...(category ? { category } : {}),
-    })
+    });
 
-    if (!item){
-      throw new NotFoundException(`Item with id ${id} not found`)
+    if (!item) {
+      throw new NotFoundException(`Item with id ${id} not found`);
     }
 
     try {
-      await this.itemRepository.save(item)
-      return item
-    
+      await this.itemRepository.save(item);
+      return item;
     } catch (error) {
-      this.handleExceptions(error)
+      this.handleExceptions(error);
     }
   }
 
-  async remove(id: string) {
-    const item = await this.itemRepository.findOneBy({ id })
+  async remove(id: string): Promise<void> {
+    const item = await this.itemRepository.findOneBy({ id });
 
-    if (!item){
-      throw new NotFoundException(`Item with id ${id} not found`)
+    if (!item) {
+      throw new NotFoundException(`Item with id ${id} not found`);
     }
 
-    this.itemRepository.remove(item)
+    await this.itemRepository.remove(item);
   }
 
   async createForTrip(tripId: string, createItemDto: CreateItemDto, userId: string): Promise<Item> {
@@ -252,12 +258,12 @@ export class ItemsService {
     await this.itemRepository.remove(item);
   }
 
-  private handleExceptions(error: any){
-    // TODO: Añadir los códigos de error que veamos que se van dando
+  private handleExceptions(error: any): never {
+    // TODO: Add error codes as they are encountered
     // if (error.code === 0) throw new BadRequestException(error.detail)
 
-    this.logger.error(error)
+    this.logger.error(error);
 
-    throw new InternalServerErrorException('Unexpected error, check server logs')
+    throw new InternalServerErrorException('Unexpected error, check server logs');
   }
 }
