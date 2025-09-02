@@ -9,16 +9,18 @@ import { UpdateTripDto } from './dto/update-trip.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { InviteParticipantDto } from './dto/invite-participant.dto';
 import { UpdateParticipantRoleDto } from './dto/update-participant-role.dto';
+import { ParticipantRole } from 'src/common/enums/participant-role.enum';
+import { ParticipantStatus } from 'src/common/enums/participant-status.enum';
 
 @Injectable()
 export class TripsService {
   constructor(
     @InjectRepository(Trip)
-    private tripRepository: Repository<Trip>,
+    private readonly tripRepository: Repository<Trip>,
     @InjectRepository(TripParticipant)
-    private participantRepository: Repository<TripParticipant>,
+    private readonly participantRepository: Repository<TripParticipant>,
     @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async create(createTripDto: CreateTripDto, ownerId: string): Promise<Trip> {
@@ -41,8 +43,8 @@ export class TripsService {
     const ownerParticipant = this.participantRepository.create({
       trip: savedTrip,
       user: owner,
-      role: 'owner',
-      status: 'joined',
+      role: ParticipantRole.OWNER,
+      status: ParticipantStatus.JOINED,
       invitedBy: owner,
       joinedAt: new Date(),
     });
@@ -57,7 +59,7 @@ export class TripsService {
       .leftJoinAndSelect('trip.owner', 'owner')
       .leftJoin('trip.participants', 'participant')
       .where('(trip.owner.id = :userId OR (participant.user.id = :userId AND participant.status = :joinedStatus))', 
-        { userId, joinedStatus: 'joined' });
+        { userId, joinedStatus: ParticipantStatus.JOINED });
 
     if (filters?.search) {
       query.andWhere('(trip.name ILIKE :search OR trip.description ILIKE :search OR trip.destination ILIKE :search)', 
@@ -87,7 +89,7 @@ export class TripsService {
 
     if (filters?.isParticipant === true) {
       query.andWhere('participant.user.id = :userId AND participant.status = :joinedStatus', 
-        { userId, joinedStatus: 'joined' });
+        { userId, joinedStatus: ParticipantStatus.JOINED });
     }
 
     // Pagination
@@ -116,7 +118,7 @@ export class TripsService {
 
     // Check if user has access to this trip
     const hasAccess = trip.owner.id === userId || 
-      trip.participants.some(p => p.user.id === userId && p.status === 'joined');
+      trip.participants.some(p => p.user.id === userId && p.status === ParticipantStatus.JOINED);
 
     if (!hasAccess) {
       throw new ForbiddenException('Access denied');
@@ -143,7 +145,7 @@ export class TripsService {
 
     // Check if user can update (owner or admin)
     const canUpdate = trip.owner.id === userId || 
-      trip.participants.some(p => p.user.id === userId && p.role === 'admin' && p.status === 'joined');
+      trip.participants.some(p => p.user.id === userId && p.role === ParticipantRole.ADMIN && p.status === ParticipantStatus.JOINED);
 
     if (!canUpdate) {
       throw new ForbiddenException('Only trip owner or admins can update trip details');
@@ -169,7 +171,7 @@ export class TripsService {
 
     // Check if inviter can invite (owner or admin)
     const canInvite = trip.owner.id === inviterId || 
-      trip.participants.some(p => p.user.id === inviterId && p.role === 'admin' && p.status === 'joined');
+      trip.participants.some(p => p.user.id === inviterId && p.role === ParticipantRole.ADMIN && p.status === ParticipantStatus.JOINED);
 
     if (!canInvite) {
       throw new ForbiddenException('Only trip owner or admins can invite participants');
@@ -189,7 +191,7 @@ export class TripsService {
       where: { trip: { id: tripId }, user: { id: inviteDto.userId } }
     });
 
-    if (existingParticipant && existingParticipant.status !== 'left') {
+    if (existingParticipant && existingParticipant.status !== ParticipantStatus.LEFT) {
       throw new BadRequestException('User is already a participant');
     }
 
@@ -205,8 +207,8 @@ export class TripsService {
       trip,
       user: userToInvite,
       invitedBy: inviter,
-      role: inviteDto.role || 'participant',
-      status: 'invited',
+      role: (inviteDto.role as ParticipantRole) || ParticipantRole.PARTICIPANT,
+      status: ParticipantStatus.INVITED,
     });
 
     return this.participantRepository.save(participant);
@@ -239,11 +241,11 @@ export class TripsService {
     });
 
     if (existingParticipant) {
-      if (existingParticipant.status === 'joined') {
+      if (existingParticipant.status === ParticipantStatus.JOINED) {
         throw new BadRequestException('User is already a participant');
-      } else if (existingParticipant.status === 'invited') {
+      } else if (existingParticipant.status === ParticipantStatus.INVITED) {
         // User was invited, now joining
-        existingParticipant.status = 'joined';
+        existingParticipant.status = ParticipantStatus.JOINED;
         existingParticipant.joinedAt = new Date();
         return this.participantRepository.save(existingParticipant);
       }
@@ -254,8 +256,8 @@ export class TripsService {
       const newParticipant = this.participantRepository.create({
         trip,
         user,
-        role: 'participant',
-        status: 'joined',
+        role: ParticipantRole.PARTICIPANT,
+        status: ParticipantStatus.JOINED,
         joinedAt: new Date(),
       });
       return this.participantRepository.save(newParticipant);
@@ -316,11 +318,11 @@ export class TripsService {
     }
 
     // Cannot change owner role
-    if (participant.role === 'owner') {
+    if (participant.role === ParticipantRole.OWNER) {
       throw new ForbiddenException('Cannot change owner role');
     }
 
-    participant.role = updateDto.role;
+    participant.role = updateDto.role as ParticipantRole;
     return this.participantRepository.save(participant);
   }
 }
