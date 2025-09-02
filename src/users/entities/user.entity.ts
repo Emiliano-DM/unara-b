@@ -78,6 +78,14 @@ export class User {
     @Column({ type: 'text', nullable: true })
     emergencyContact?: string
 
+    @ApiProperty({ description: 'Social authentication provider', example: 'google', required: false })
+    @Column({ type: 'varchar', length: 20, nullable: true })
+    socialProvider?: string
+
+    @Exclude()
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    socialId?: string
+
     @OneToMany(() => Luggage, luggage => luggage.user)
     luggage: Luggage[];
 

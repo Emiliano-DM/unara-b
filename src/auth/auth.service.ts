@@ -4,6 +4,7 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
+import { SocialAuthDto, RefreshTokenDto } from './dto/social-auth.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 
@@ -126,6 +127,85 @@ export class AuthService {
     return { message: 'Password successfully reset' };
   }
 
+  async socialAuth(socialAuthDto: SocialAuthDto) {
+    // Validate the provider token (this is a simplified version)
+    const isValidToken = await this.validateSocialToken(
+      socialAuthDto.provider,
+      socialAuthDto.access_token,
+      socialAuthDto.user_info
+    );
+
+    if (!isValidToken) {
+      throw new UnauthorizedException('Invalid social auth token');
+    }
+
+    // Extract email from user_info
+    const email = socialAuthDto.user_info.email;
+    if (!email) {
+      throw new BadRequestException('Email is required from social provider');
+    }
+
+    // Find existing user or create new one
+    let user = await this.usersService.findByEmail(email);
+    
+    if (!user) {
+      // Create new user from social auth
+      const hashedRandomPassword = await this.hashPassword(randomBytes(32).toString('hex'));
+      user = await this.usersService.create({
+        email: email,
+        username: socialAuthDto.user_info.email.split('@')[0] + '_' + socialAuthDto.provider,
+        password: hashedRandomPassword, // Random password since they'll use social login
+        fullname: socialAuthDto.user_info.name || 'Social User',
+        firstName: socialAuthDto.user_info.given_name || socialAuthDto.user_info.name?.split(' ')[0] || 'Social',
+        lastName: socialAuthDto.user_info.family_name || socialAuthDto.user_info.name?.split(' ').slice(1).join(' ') || 'User',
+        socialProvider: socialAuthDto.provider,
+        socialId: socialAuthDto.user_info.id || socialAuthDto.user_info.sub,
+      });
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is inactive');
+    }
+
+    // Update last login
+    await this.usersService.update(user.id, { lastLoginAt: new Date() });
+
+    // Generate JWT token with refresh token
+    const payload = { email: user.email, sub: user.id };
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    return {
+      user: this.sanitizeUser(user),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async refreshToken(refreshTokenDto: RefreshTokenDto) {
+    try {
+      // Verify refresh token
+      const decoded = this.jwtService.verify(refreshTokenDto.refresh_token);
+      
+      // Find user
+      const user = await this.usersService.findByEmail(decoded.email);
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      // Generate new access token
+      const payload = { email: user.email, sub: user.id };
+      const accessToken = this.jwtService.sign(payload);
+
+      return {
+        accessToken,
+        user: this.sanitizeUser(user),
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
   async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
     
@@ -134,6 +214,44 @@ export class AuthService {
     }
     
     return null;
+  }
+
+  private async validateSocialToken(provider: string, accessToken: string, userInfo: any): Promise<boolean> {
+    // In a real implementation, you would validate the token with the provider's API
+    // For now, we'll do basic validation
+    switch (provider) {
+      case 'google':
+        return this.validateGoogleToken(accessToken, userInfo);
+      case 'facebook':
+        return this.validateFacebookToken(accessToken, userInfo);
+      case 'apple':
+        return this.validateAppleToken(accessToken, userInfo);
+      case 'microsoft':
+        return this.validateMicrosoftToken(accessToken, userInfo);
+      default:
+        return false;
+    }
+  }
+
+  private async validateGoogleToken(accessToken: string, userInfo: any): Promise<boolean> {
+    // In production, verify with Google's token validation endpoint
+    // For now, just check if required fields exist
+    return !!(userInfo.email && userInfo.sub && accessToken);
+  }
+
+  private async validateFacebookToken(accessToken: string, userInfo: any): Promise<boolean> {
+    // In production, verify with Facebook's token validation endpoint
+    return !!(userInfo.email && userInfo.id && accessToken);
+  }
+
+  private async validateAppleToken(accessToken: string, userInfo: any): Promise<boolean> {
+    // In production, verify with Apple's token validation endpoint
+    return !!(userInfo.email && userInfo.sub && accessToken);
+  }
+
+  private async validateMicrosoftToken(accessToken: string, userInfo: any): Promise<boolean> {
+    // In production, verify with Microsoft's token validation endpoint
+    return !!(userInfo.email && userInfo.id && accessToken);
   }
 
   private async hashPassword(password: string): Promise<string> {

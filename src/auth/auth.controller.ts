@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
+import { SocialAuthDto, RefreshTokenDto } from './dto/social-auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -118,5 +119,62 @@ export class AuthController {
   @AuthThrottle()
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return await this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @ApiOperation({ summary: 'Authenticate using social provider' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Social authentication successful',
+    schema: {
+      type: 'object',
+      properties: {
+        access_token: { type: 'string', example: 'jwt-token-string' },
+        refresh_token: { type: 'string', example: 'refresh-token-string' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: 'uuid-string' },
+            email: { type: 'string', example: 'user@example.com' },
+            username: { type: 'string', example: 'username' },
+            socialProvider: { type: 'string', example: 'google' }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid provider data' })
+  @ApiResponse({ status: 401, description: 'Invalid social auth token' })
+  @ApiResponse({ status: 429, description: 'Too many requests' })
+  @Post('social')
+  @AuthThrottle()
+  async socialAuth(@Body() socialAuthDto: SocialAuthDto) {
+    return await this.authService.socialAuth(socialAuthDto);
+  }
+
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Token refresh successful',
+    schema: {
+      type: 'object',
+      properties: {
+        access_token: { type: 'string', example: 'new-jwt-token-string' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: 'uuid-string' },
+            email: { type: 'string', example: 'user@example.com' },
+            username: { type: 'string', example: 'username' }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  @ApiResponse({ status: 429, description: 'Too many requests' })
+  @Post('refresh')
+  @AuthThrottle()
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    return await this.authService.refreshToken(refreshTokenDto);
   }
 }

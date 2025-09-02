@@ -66,4 +66,24 @@ export class CreateUserDto {
     @IsString()
     @IsOptional()
     profile_picture?: string
+
+    @ApiProperty({
+        description: 'Social authentication provider',
+        example: 'google',
+        required: false
+    })
+    @IsString()
+    @IsOptional()
+    @MaxLength(20)
+    socialProvider?: string
+
+    @ApiProperty({
+        description: 'Social provider user ID',
+        example: '1234567890',
+        required: false
+    })
+    @IsString()
+    @IsOptional()
+    @MaxLength(255)
+    socialId?: string
 }
