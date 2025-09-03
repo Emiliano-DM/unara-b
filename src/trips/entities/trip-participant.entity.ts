@@ -10,8 +10,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Trip } from './trip.entity';
-import { ParticipantRole } from 'src/common/enums/participant-role.enum';
-import { ParticipantStatus } from 'src/common/enums/participant-status.enum';
+import { ParticipantRole } from '../../common/enums/participant-role.enum';
+import { ParticipantStatus } from '../../common/enums/participant-status.enum';
 
 @Entity()
 @Unique(['trip', 'user'])

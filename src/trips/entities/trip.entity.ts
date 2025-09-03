@@ -13,7 +13,7 @@ import { User } from '../../users/entities/user.entity';
 import { TripParticipant } from './trip-participant.entity';
 import { Luggage } from '../../luggage/entities/luggage.entity';
 import { Item } from '../../items/entities/item.entity';
-import { TripStatus } from 'src/common/enums/trip-status.enum';
+import { TripStatus } from '../../common/enums/trip-status.enum';
 import { randomBytes } from 'crypto';
 
 @Entity()
