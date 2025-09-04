@@ -14,6 +14,7 @@ import { TripParticipant } from './trip-participant.entity';
 import { Luggage } from '../../luggage/entities/luggage.entity';
 import { Item } from '../../items/entities/item.entity';
 import { TripStatus } from '../../common/enums/trip-status.enum';
+import { Itinerary } from '../../itinerary/entities/itinerary.entity';
 import { randomBytes } from 'crypto';
 
 @Entity()
@@ -99,6 +100,9 @@ export class Trip {
 
   @OneToMany(() => Item, (item) => item.trip)
   items: Item[];
+
+  @OneToMany(() => Itinerary, (itinerary) => itinerary.trip)
+  itinerary: Itinerary[];
 
   @CreateDateColumn()
   createdAt: Date;
