@@ -1,4 +1,8 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Activity } from "src/activities/entities/activity.entity";
+import { Luggage } from "src/luggage/entities/luggage.entity";
+import { Place } from "src/places/entities/place.entity";
+import { Trip } from "src/trips/entities/trip.entity";
+import { Column, CreateDateColumn, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class User {
@@ -19,6 +23,32 @@ export class User {
 
     @Column({ type: 'text', nullable: true })
     profile_picture?: string
+
+    @ManyToMany(
+        () => Luggage,
+        (luggage) => luggage.users
+    )
+    luggage: Luggage[]
+
+    @ManyToMany(
+        () => Trip,
+        (trip) => trip.users
+    )
+    trips: Trip[]
+
+    @OneToMany(
+        () => Activity,
+        (activity) => activity.user, 
+        { cascade: true }
+    )
+    activities: Activity[]
+
+    @OneToMany(
+        () => Place,
+        (place) => place.user, 
+        { cascade: true }
+    )
+    places: Place[]
 
     @CreateDateColumn()
     createdAt: Date;

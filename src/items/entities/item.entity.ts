@@ -29,8 +29,6 @@ export class Item {
     )
     luggageItems: LuggageItem[];
 
-    // TODO: Relacionarlo usuarios
-
     @CreateDateColumn()
     createdAt: Date
 

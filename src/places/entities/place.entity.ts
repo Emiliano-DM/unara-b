@@ -1,5 +1,6 @@
 import { Activity } from 'src/activities/entities/activity.entity';
 import { Trip } from 'src/trips/entities/trip.entity';
+import { User } from 'src/users/entities/user.entity';
 import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
@@ -33,9 +34,11 @@ export class Place {
     )
     activities: Activity[];
 
-    // TODO: Añadir relación con usuarios
-
-    // TODO: Añadir links a TikTok, Instagram, etc
+    @ManyToOne(
+        () => User,
+        (user) => user.places
+    )
+    user: User
     
     @CreateDateColumn()
     createdAt: Date

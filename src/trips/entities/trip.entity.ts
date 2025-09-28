@@ -1,7 +1,8 @@
 import { Place } from "src/places/entities/place.entity";
 import { Luggage } from "src/luggage/entities/luggage.entity";
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Activity } from "src/activities/entities/activity.entity";
+import { User } from "src/users/entities/user.entity";
 
 @Entity()
 export class Trip {
@@ -36,7 +37,12 @@ export class Trip {
     )
     luggage: Luggage[];
 
-    // TODO: Añadir relación con usuarios
+    @JoinTable()
+    @ManyToMany(
+        () => User,
+        (user) => user.trips
+    )
+    users: User[]
 
     @OneToMany(
         () => Activity, 

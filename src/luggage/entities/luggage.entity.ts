@@ -1,6 +1,7 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { LuggageItem } from "./luggage-item.entity";
 import { Trip } from "src/trips/entities/trip.entity";
+import { User } from "src/users/entities/user.entity";
 
 @Entity()
 export class Luggage {
@@ -25,7 +26,12 @@ export class Luggage {
     )
     trip?: Trip;
 
-    // TODO usuario asociado
+    @JoinTable()
+    @ManyToMany(
+        () => User,
+        (user) => user.luggage
+    )
+    users: User[]
     
     @CreateDateColumn()
     createdAt: Date;
