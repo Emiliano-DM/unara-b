@@ -6,6 +6,7 @@ import { Place } from './entities/place.entity';
 import { Repository } from 'typeorm';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { FilterPlaceDto } from './dto/filter-place.dto';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class PlacesService {
@@ -16,92 +17,110 @@ export class PlacesService {
 
     @InjectRepository(Trip)
     private readonly tripRepository: Repository<Trip>,
+
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ){}
 
-  async create(tripId: string, dto: CreatePlaceDto) {
-    const trip = await this.tripRepository.findOne({ where: { id: tripId } })
+  async create(dto: CreatePlaceDto) {
+      const { tripId, userId, ...placeData } = dto;
 
-    if (!trip) {
-      throw new NotFoundException(`Trip with id ${tripId} not found`)
-    }
+      const trip = await this.tripRepository.findOne({ where: { id: tripId } });
+      if (!trip) {
+          throw new NotFoundException(`Trip with id ${tripId} not found`);
+      }
 
-    const place = this.placeRepository.create({
-      ...dto,
-      trip
-    })
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+          throw new NotFoundException(`User with id ${userId} not found`);
+      }
 
-    await this.placeRepository.save(place)
-    return place
+      const place = this.placeRepository.create({
+          ...placeData,
+          trip,
+          user
+      });
+
+      await this.placeRepository.save(place);
+      return place;
   }
 
-  async findAll(tripId: string, dto: FilterPlaceDto) {
-    const { 
-      limit = 10, 
-      offset = 0,
-      name,
-      description,
-    } = dto
+  async findAll(dto: FilterPlaceDto) {
+      const { 
+          limit = 10, 
+          offset = 0,
+          name,
+          description,
+          userId,
+          tripId,
+      } = dto;
 
-    const query = this.placeRepository.createQueryBuilder('place')
+      const query = this.placeRepository
+          .createQueryBuilder('place')
+          .leftJoinAndSelect('place.trip', 'trip')
+          .leftJoinAndSelect('place.user', 'user');
 
-    query.where('place.tripId = :tripId', { tripId });
+      if (tripId) query.andWhere('place.tripId = :tripId', { tripId });
+      if (name) query.andWhere('place.name ILIKE :name', { name: `%${name}%` });
+      if (description) query.andWhere('place.description ILIKE :description', { description: `%${description}%` });
+      if (userId) query.andWhere('place.userId = :userId', { userId });
 
-    if (name) query.andWhere('place.name ILIKE :name', { name: `%${name}%`})
-    
-    if (description) query.andWhere('place.description ILIKE :description', { description: `%${description}%`})
+      query.skip(offset).take(limit);
 
-    query.skip(offset).take(limit)
-
-    return query.getMany()
+      return query.getMany();
   }
   
-  async findOne(tripId: string, placeId: string) {
-    const place = await this.placeRepository.findOne({
-      where: {
-        id: placeId,
-        trip: { id: tripId },
-      },
-    });
+  async findOne(id: string) {
+      const place = await this.placeRepository.findOne({
+          where: { id: id },
+          relations: ['trip', 'user', 'activities'],
+      });
 
-    if (!place) {
-      throw new NotFoundException(`Place with id ${placeId} not found in trip ${tripId}`);
-    }
+      if (!place) {
+          throw new NotFoundException(`Place with id ${id} not found`);
+      }
 
-    return place;
+      return place;
   }
 
-  async update(tripId: string, placeId: string, dto: UpdatePlaceDto) {
+  async update(id: string, dto: UpdatePlaceDto) {
+    const { tripId, userId, ...placeData } = dto;
+
+    const trip = await this.tripRepository.findOne({ where: { id: tripId } });
+    if (!trip) throw new NotFoundException(`Trip with id ${tripId} not found`);
+
+    let user: User | null = null;
+    if (userId) {
+      user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
     const place = await this.placeRepository.preload({
-      id: placeId,
-      ...dto,
-      trip: { id: tripId },
+      id,
+      ...placeData,
+      trip,
+      ...(user ? { user } : {}),
     });
-    
-    if (!place) {
-      throw new NotFoundException(`Place with id ${placeId} not found in trip ${tripId}`);
+
+    if (!place) throw new NotFoundException(`Place with id ${id} not found`);
+
+    try {
+      await this.placeRepository.save(place);
+    } catch (error) {
+      throw new InternalServerErrorException('Error updating place');
     }
-    
-    await this.placeRepository.save(place);
+
     return place;
   }
   
-  async remove(tripId: string, placeId: string) {
-    const place = await this.placeRepository.findOne({
-      where: {
-        id: placeId,
-        trip: { id: tripId },
-      },
-    });
-    
+  async remove(id: string) {
+    const place = await this.placeRepository.findOneBy({ id });
+
     if (!place) {
-      throw new NotFoundException(`Place with id ${placeId} not found in trip ${tripId}`);
+      throw new NotFoundException(`Place with id ${id} not found`);
     }
-    
-    try {
-      await this.placeRepository.remove(place);
-      return { message: 'Place removed successfully' };
-    } catch (error) {
-      throw new InternalServerErrorException('Unexpected error, check server logs');
-    }
+
+    await this.placeRepository.remove(place);
+    return { message: `Place with id ${id} has been removed` };
   }
 }
