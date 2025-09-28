@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsDate, IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsDate, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 import { IsAfter } from "src/common/validators/is-after.validator";
 
 export class CreateTripDto {
@@ -27,4 +27,10 @@ export class CreateTripDto {
     @IsNotEmpty()
     @IsAfter('startDate')
     endDate: Date;
+
+    @IsArray()
+    @ArrayNotEmpty()
+    @ArrayUnique()
+    @IsUUID("all", { each: true })
+    userIds: string[];
 }

@@ -20,4 +20,12 @@ export class CreatePlaceDto {
     @IsNumber()
     @Type(() => Number)
     longitude: number;
+
+    @IsUUID()
+    @IsNotEmpty()
+    tripId: string;
+
+    @IsUUID()
+    @IsNotEmpty()
+    userId: string;
 }
