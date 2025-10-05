@@ -49,11 +49,16 @@ export class SeedService {
                 const trip_data = MOCK_TRIPS;
                 const item_categories_data = MOCK_ITEM_CATEGORIES;
 
-                //Clearing database
+                //Clearing database (delete in reverse dependency order)
                 console.log('Clearing existing data...');
-                await manager.getRepository(User).createQueryBuilder().delete().execute();
+                await manager.getRepository(LuggageItem).createQueryBuilder().delete().execute();
+                await manager.getRepository(Activity).createQueryBuilder().delete().execute();
+                await manager.getRepository(Luggage).createQueryBuilder().delete().execute();
+                await manager.getRepository(Item).createQueryBuilder().delete().execute();
+                await manager.getRepository(Place).createQueryBuilder().delete().execute();
                 await manager.getRepository(Trip).createQueryBuilder().delete().execute();
                 await manager.getRepository(ItemCategory).createQueryBuilder().delete().execute();
+                await manager.getRepository(User).createQueryBuilder().delete().execute();
                 console.log('Database cleared');
 
                 //Independent entities
