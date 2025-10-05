@@ -9,6 +9,7 @@ import { ItemCategoriesModule } from './item-categories/item-categories.module';
 import { TripsModule } from './trips/trips.module';
 import { PlacesModule } from './places/places.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -39,7 +40,9 @@ import { ActivitiesModule } from './activities/activities.module';
 
     PlacesModule,
 
-    ActivitiesModule
+    ActivitiesModule,
+
+    SeedModule
   ],
 })
 export class AppModule {}
