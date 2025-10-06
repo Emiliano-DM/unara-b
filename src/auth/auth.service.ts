@@ -4,7 +4,7 @@ import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
-import { User } from 'src/users/entities/user.entity';
+
 
 
 @Injectable()
@@ -26,6 +26,7 @@ export class AuthService {
   }
 
   async accessAccount(loginDto:LoginDto){
+    
     const user = await this.usersService.findByEmail(loginDto.email)
     if (!user) {
       throw new UnauthorizedException('Invalid credentials')
