@@ -9,10 +9,11 @@ import { ItemCategoriesModule } from './item-categories/item-categories.module';
 import { TripsModule } from './trips/trips.module';
 import { PlacesModule } from './places/places.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({isGlobal:true}),
 
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -39,7 +40,9 @@ import { ActivitiesModule } from './activities/activities.module';
 
     PlacesModule,
 
-    ActivitiesModule
+    ActivitiesModule,
+
+    AuthModule
   ],
 })
 export class AppModule {}
