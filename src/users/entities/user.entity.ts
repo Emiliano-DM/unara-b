@@ -2,57 +2,51 @@ import { Activity } from "src/activities/entities/activity.entity";
 import { Luggage } from "src/luggage/entities/luggage.entity";
 import { Place } from "src/places/entities/place.entity";
 import { Trip } from "src/trips/entities/trip.entity";
-import { Column, CreateDateColumn, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
 @Entity()
 export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-    @Column({ type: 'varchar', length: 255 })
-    fullname: string
+  @Column({ type: "varchar", length: 255 })
+  fullname: string;
 
-    @Column({ type: 'varchar', length: 255, unique: true })
-    email: string
-    
-    @Column({ type: 'varchar', length: 255, unique: true })
-    username: string
+  @Column({ type: "varchar", length: 255, unique: true })
+  email: string;
 
-    @Column('text')
-    password: string
+  @Column({ type: "varchar", length: 255, unique: true })
+  username: string;
 
-    @Column({ type: 'text', nullable: true })
-    profile_picture?: string
+  @Column("text")
+  password: string;
 
-    @ManyToMany(
-        () => Luggage,
-        (luggage) => luggage.users
-    )
-    luggage: Luggage[]
+  @Column({ type: "text", nullable: true })
+  profile_picture?: string;
 
-    @ManyToMany(
-        () => Trip,
-        (trip) => trip.users
-    )
-    trips: Trip[]
+  @OneToMany(() => Luggage, (luggage) => luggage.user)
+  luggage: Luggage[];
 
-    @OneToMany(
-        () => Activity,
-        (activity) => activity.user, 
-        { cascade: true }
-    )
-    activities: Activity[]
+  @ManyToMany(() => Trip, (trip) => trip.users)
+  trips: Trip[];
 
-    @OneToMany(
-        () => Place,
-        (place) => place.user, 
-        { cascade: true }
-    )
-    places: Place[]
+  @OneToMany(() => Activity, (activity) => activity.user, { cascade: true })
+  activities: Activity[];
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @OneToMany(() => Place, (place) => place.user, { cascade: true })
+  places: Place[];
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

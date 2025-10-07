@@ -10,9 +10,7 @@ export class CreateLuggageDto {
     @IsOptional()
     tripId: string
 
-    @IsArray()
-    @ArrayNotEmpty()
-    @ArrayUnique()
-    @IsUUID("all", { each: true })
-    userIds: string[];
+    @IsUUID()
+    @IsNotEmpty()
+    userId: string;
 }

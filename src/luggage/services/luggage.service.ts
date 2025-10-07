@@ -22,30 +22,30 @@ export class LuggageService {
     private readonly userRepository: Repository<User>,
   ){}
 
-
   async create(dto: CreateLuggageDto) {
-    const { tripId, userIds, ...luggageData } = dto;
+    const { tripId, userId, ...luggageData } = dto;
 
-    const users = await this.userRepository.find({
-      where: { id: In(userIds) }  
-    });
-
-    if (users.length !== userIds.length) {
-      throw new NotFoundException("Some users not found");
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    const trip = await this.tripRepository.findOne({ where: { id: tripId } });
-    
-    if (!trip) throw new NotFoundException(`Trip with id ${tripId} not found`);
+    let trip: Trip | null = null;
+    if (tripId) {
+      trip = await this.tripRepository.findOne({ where: { id: tripId } });
+      if (!trip) {
+        throw new NotFoundException(`Trip with id ${tripId} not found`);
+      }
+    }
 
     const luggage = this.luggageRepository.create({
       ...luggageData,
-      trip: trip,
-      users: users,
-    })
-    
-    await this.luggageRepository.save(luggage)
-    return luggage
+      user,
+      ...(trip ? { trip } : {}),
+    });
+
+    await this.luggageRepository.save(luggage);
+    return luggage;
   }
 
   async findAll(dto: FilterLuggageDto) {
@@ -59,7 +59,7 @@ export class LuggageService {
 
     const query = this.luggageRepository
                     .createQueryBuilder('luggage')
-                    .leftJoinAndSelect('luggage.users', 'user')
+                    .leftJoinAndSelect('luggage.user', 'user')
                     .leftJoinAndSelect('luggage.trip', 'trip');
 
     if (name) {
@@ -82,7 +82,7 @@ export class LuggageService {
   async findOne(id: string) {
     const luggage = await this.luggageRepository.findOne({
       where: { id },
-      relations: ['trip', 'users'],
+      relations: ['trip', 'user'],
     });
 
     if (!luggage) {
@@ -93,27 +93,25 @@ export class LuggageService {
   }
 
   async update(id: string, updateLuggageDto: UpdateLuggageDto) {
-    const { tripId, userIds, ...luggageData } = updateLuggageDto;
+    const { tripId, userId, ...luggageData } = updateLuggageDto;
 
-    const trip = await this.tripRepository.findOne({ where: { id: tripId } });
-    if (!trip) throw new NotFoundException(`Trip with id ${tripId} not found`);
+    let trip: Trip | null = null;
+    if (tripId) {
+      trip = await this.tripRepository.findOne({ where: { id: tripId } });
+      if (!trip) throw new NotFoundException(`Trip with id ${tripId} not found`);
+    }
 
-    let users: User[] | null = null;
-    if (userIds) {
-      users = await this.userRepository.find({
-        where: { id: In(userIds) }
-      });
-
-      if (users.length !== userIds.length) {
-        throw new NotFoundException("Some users not found");
-      }
+    let user: User | null = null;
+    if (userId) {
+      user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) throw new NotFoundException(`User with id ${userId} not found`);
     }
 
     const luggage = await this.luggageRepository.preload({
       id,
       ...luggageData,
-      trip,
-      ...(users ? { users } : {})
+      ...(trip ? { trip } : {}),
+      ...(user ? { user } : {}),
     });
 
     if (!luggage) {
