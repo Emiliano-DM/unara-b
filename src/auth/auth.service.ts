@@ -4,6 +4,7 @@ import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 
 
@@ -21,7 +22,10 @@ export class AuthService {
     const createdUser = await this.usersService.create({...registerDto, password: hashedPassword})
 
     return {
-      access_token: this.generateToken(createdUser.id, createdUser.email)
+      id: createdUser.id, 
+      email: createdUser.email, 
+      username: createdUser.username, 
+      access_token: this.generateToken({id:createdUser.id, email:createdUser.email})
     }
   }
 
@@ -38,11 +42,14 @@ export class AuthService {
     }
 
     return {
-      access_token: this.generateToken(user.id, user.email)
+      id: user.id, 
+      email: user.email, 
+      username: user.username,
+      access_token: this.generateToken({id: user.id, email:user.email})
     }
   }
 
-  private generateToken(userId:string, email:string){
-    return this.jwtService.sign({ sub: userId, email });
+  private generateToken(payload: JwtPayload){
+    return this.jwtService.sign(payload);
   }
 }

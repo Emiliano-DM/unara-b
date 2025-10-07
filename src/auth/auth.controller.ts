@@ -1,7 +1,13 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { GetUser } from './decoradors/get-user.decorador';
+import { User } from 'src/users/entities/user.entity';
+import { RoleProtected } from './decoradors/role-protected.decorator';
+import { UserRoleGuard } from './guards/user-role/user-role.guard';
+import { ValidRoles } from './enums/valid-roles.enum';
 
 
 @Controller('auth')
@@ -16,5 +22,17 @@ export class AuthController {
   @Post('/login')
   accessAccount(@Body() loginDto:LoginDto){
     return this.authService.accessAccount(loginDto)
+  }
+
+  @Get('private')
+  @UseGuards(AuthGuard(), UserRoleGuard)
+  @RoleProtected(ValidRoles.admin)
+  testingPrivateRoute(@GetUser() user:User){
+    
+    return {
+      ok: true,
+      message: 'Hola private',
+      user
+    }
   }
 }
