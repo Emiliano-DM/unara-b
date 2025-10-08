@@ -9,6 +9,7 @@ import { RoleProtected } from './decoradors/role-protected.decorator';
 import { UserRoleGuard } from './guards/user-role/user-role.guard';
 import { ValidRoles } from './enums/valid-roles.enum';
 import { Auth } from './decoradors/auth.decorador';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 
 @Controller('auth')
@@ -25,14 +26,14 @@ export class AuthController {
     return this.authService.accessAccount(loginDto)
   }
 
-  @Get('private')
-  @Auth(ValidRoles.admin)
-  testingPrivateRoute(@GetUser() user:User){
-    
-    return {
-      ok: true,
-      message: 'Hola private',
-      user
-    }
+  @Post('/logout')
+  @Auth(ValidRoles.user)
+  logout() {
+    return { message: 'Logged out successfully' };
+  }
+
+  @Post('refresh')
+  refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshToken(refreshTokenDto);
   }
 }

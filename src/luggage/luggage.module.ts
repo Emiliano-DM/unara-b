@@ -9,6 +9,7 @@ import { LuggageItem } from './entities/luggage-item.entity';
 import { ItemsModule } from 'src/items/items.module';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { User } from 'src/users/entities/user.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   controllers: [
@@ -27,6 +28,7 @@ import { User } from 'src/users/entities/user.entity';
       User,
     ]),
     ItemsModule,
+    AuthModule
   ]
 })
 export class LuggageModule {}

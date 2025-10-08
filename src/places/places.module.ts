@@ -5,6 +5,7 @@ import { Place } from './entities/place.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { User } from 'src/users/entities/user.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   controllers: [PlacesController],
@@ -14,7 +15,8 @@ import { User } from 'src/users/entities/user.entity';
       Place, 
       Trip, 
       User 
-    ])
+    ]),
+    AuthModule
   ]
 })
 export class PlacesModule {}

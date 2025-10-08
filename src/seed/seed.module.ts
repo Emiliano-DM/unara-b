@@ -10,10 +10,14 @@ import { Item } from 'src/items/entities/item.entity';
 import { Luggage } from 'src/luggage/entities/luggage.entity';
 import { LuggageItem } from 'src/luggage/entities/luggage-item.entity';
 import { Activity } from 'src/activities/entities/activity.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   controllers: [SeedController],
   providers: [SeedService],
-  imports: [TypeOrmModule.forFeature([User, Trip, ItemCategory, Place, Item, Luggage, LuggageItem, Activity])]
+  imports: [
+    TypeOrmModule.forFeature([User, Trip, ItemCategory, Place, Item, Luggage, LuggageItem, Activity]),
+    AuthModule
+  ]
 })
 export class SeedModule {}

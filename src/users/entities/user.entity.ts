@@ -34,6 +34,9 @@ export class User {
   @Column({ type:'text', array:true, default: ['user']})
   roles: string[]
 
+  @Column({type:'text', nullable: true, select: false })
+  refresh_token?: string
+
   @Column({ type: "text", nullable: true })
   profile_picture?: string;
 

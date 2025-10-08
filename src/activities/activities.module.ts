@@ -6,6 +6,7 @@ import { Activity } from './entities/activity.entity';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { Place } from 'src/places/entities/place.entity';
 import { User } from 'src/users/entities/user.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   controllers: [ActivitiesController],
@@ -16,7 +17,8 @@ import { User } from 'src/users/entities/user.entity';
       Trip, 
       Place,
       User,
-    ])
+    ]),
+    AuthModule
   ]
 })
 export class ActivitiesModule {}
