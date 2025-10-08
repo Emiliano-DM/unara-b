@@ -1,35 +1,48 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm";
 import { LuggageItem } from "./luggage-item.entity";
 import { Trip } from "src/trips/entities/trip.entity";
+import { User } from "src/users/entities/user.entity";
 
 @Entity()
 export class Luggage {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-    @PrimaryGeneratedColumn('uuid')
-    id: string
+  @Column("text")
+  name: string;
 
-    @Column('text')
-    name: string
-    
-    @OneToMany(
-      () => LuggageItem, 
-      luggageItem => luggageItem.luggage, 
-      { cascade: true }
-    )
-    luggageItems: LuggageItem[];
+  @OneToMany(
+    () => LuggageItem,
+    (luggageItem) => luggageItem.luggage,
+    { cascade: true }
+  )
+  luggageItems: LuggageItem[];
 
-    @ManyToOne(
-      () => Trip,
-      trip => trip.luggage,
-      { nullable: true, onDelete: 'SET NULL' }
-    )
-    trip?: Trip;
+  @ManyToOne(
+    () => Trip,
+    (trip) => trip.luggage,
+    { nullable: true, onDelete: "SET NULL" }
+  )
+  trip?: Trip;
 
-    // TODO usuario asociado
-    
-    @CreateDateColumn()
-    createdAt: Date;
+  @ManyToOne(
+    () => User,
+    (user) => user.luggage,
+    { nullable: false, onDelete: "CASCADE" }
+  )
+  user: User;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

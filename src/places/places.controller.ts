@@ -6,48 +6,35 @@ import { FilterPlaceDto } from './dto/filter-place.dto';
 import { DatabaseExceptionFilter } from 'src/common/filters/db-exception.filter';
 
 @UseFilters(new DatabaseExceptionFilter('Places'))
-@Controller('trips/:tripId/places')
+@Controller('places')
 export class PlacesController {
   constructor(private readonly placesService: PlacesService) {}
 
   @Post()
-    create(
-      @Param('tripId', ParseUUIDPipe) tripId: string,
-      @Body() dto: CreatePlaceDto
-    ) {
-      return this.placesService.create(tripId, dto);
+    create(@Body() dto: CreatePlaceDto) {
+      return this.placesService.create( dto);
     }
   
     @Get()
-    findAll(
-      @Param('tripId', ParseUUIDPipe) tripId: string,
-      @Query() dto: FilterPlaceDto
-    ) {
-      return this.placesService.findAll(tripId, dto);
+    findAll(@Query() dto: FilterPlaceDto) {
+      return this.placesService.findAll(dto);
     }
   
     @Get(':id')
-    findOne(
-      @Param('tripId', ParseUUIDPipe) tripId: string,
-      @Param('id', ParseUUIDPipe) id: string
-    ) {
-      return this.placesService.findOne(tripId, id);
+    findOne(@Param('id', ParseUUIDPipe) id: string) {
+      return this.placesService.findOne(id);
     }
     
     @Patch(':id')
     update(
-      @Param('tripId', ParseUUIDPipe) tripId: string,
       @Param('id', ParseUUIDPipe) id: string,
       @Body() dto: UpdatePlaceDto
     ) {
-      return this.placesService.update(tripId, id, dto);
+      return this.placesService.update(id, dto);
     }
     
     @Delete(':id')
-    remove(
-      @Param('tripId', ParseUUIDPipe) tripId: string,
-      @Param('id', ParseUUIDPipe) id: string
-    ) {
-      return this.placesService.remove(tripId, id);
+    remove(@Param('id', ParseUUIDPipe) id: string) {
+      return this.placesService.remove(id);
     }
 }

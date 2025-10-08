@@ -1,5 +1,6 @@
 import { Place } from "src/places/entities/place.entity";
 import { Trip } from "src/trips/entities/trip.entity";
+import { User } from "src/users/entities/user.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
@@ -23,6 +24,12 @@ export class Activity {
         { onDelete: 'CASCADE' }
     )
     trip: Trip
+
+    @ManyToOne(
+        () => User,
+        (user) => user.activities
+    )
+    user: User
 
     @ManyToOne(
         () => Place, 

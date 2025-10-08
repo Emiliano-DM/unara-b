@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsDate, IsOptional, IsString, MaxLength } from "class-validator"
+import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from "class-validator"
 import { PaginationDto } from "src/common/dto/pagination.dto";
 import { IsAfter } from "src/common/validators/is-after.validator";
 
@@ -28,4 +28,9 @@ export class FilterTripDto extends PaginationDto{
     @Type(() => Date)
     @IsAfter('startDate')
     endDate?: Date;
+
+    @IsOptional()
+    @IsUUID()
+    @IsNotEmpty()
+    userId: string;
 }

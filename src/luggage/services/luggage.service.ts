@@ -1,11 +1,12 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Luggage } from '../entities/luggage.entity';
 import { CreateLuggageDto } from '../dto/create-luggage.dto';
 import { FilterLuggageDto } from '../dto/filter-luggage.dto';
 import { UpdateLuggageDto } from '../dto/update-luggage.dto';
 import { Trip } from 'src/trips/entities/trip.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class LuggageService {
@@ -16,16 +17,35 @@ export class LuggageService {
 
     @InjectRepository(Trip)
     private readonly tripRepository: Repository<Trip>,
+
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ){}
 
-
   async create(dto: CreateLuggageDto) {
+    const { tripId, userId, ...luggageData } = dto;
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    let trip: Trip | null = null;
+    if (tripId) {
+      trip = await this.tripRepository.findOne({ where: { id: tripId } });
+      if (!trip) {
+        throw new NotFoundException(`Trip with id ${tripId} not found`);
+      }
+    }
+
     const luggage = this.luggageRepository.create({
-      ...dto
-    })
-    
-    await this.luggageRepository.save(luggage)
-    return luggage
+      ...luggageData,
+      user,
+      ...(trip ? { trip } : {}),
+    });
+
+    await this.luggageRepository.save(luggage);
+    return luggage;
   }
 
   async findAll(dto: FilterLuggageDto) {
@@ -34,54 +54,72 @@ export class LuggageService {
       offset = 0,
       name,
       tripId,
-    } = dto
+      userId,
+    } = dto;
 
     const query = this.luggageRepository
                     .createQueryBuilder('luggage')
+                    .leftJoinAndSelect('luggage.user', 'user')
+                    .leftJoinAndSelect('luggage.trip', 'trip');
 
-    if (name) query.andWhere('luggage.name ILIKE :name', { name: `%${name}%`})
+    if (name) {
+      query.andWhere('luggage.name ILIKE :name', { name: `%${name}%` });
+    }
 
-    if (tripId) query.andWhere('trip.id = :tripId', { tripId })
+    if (tripId) {
+      query.andWhere('trip.id = :tripId', { tripId });
+    }
 
-    query.skip(offset).take(limit)
+    if (userId) {
+      query.andWhere('user.id = :userId', { userId });
+    }
 
-    return query.getMany()
+    query.skip(offset).take(limit);
+
+    return query.getMany();
   }
 
   async findOne(id: string) {
     const luggage = await this.luggageRepository.findOne({
-      where: { id }
-    })
+      where: { id },
+      relations: ['trip', 'user'],
+    });
 
-    if (!luggage){
-      throw new NotFoundException(`Luggage with id ${id} not found`)
+    if (!luggage) {
+      throw new NotFoundException(`Luggage with id ${id} not found`);
     }
 
-    return luggage
+    return luggage;
   }
 
   async update(id: string, updateLuggageDto: UpdateLuggageDto) {
-    const { tripId, ...luggageData } = updateLuggageDto;
+    const { tripId, userId, ...luggageData } = updateLuggageDto;
 
     let trip: Trip | null = null;
     if (tripId) {
-      trip = await this.tripRepository.findOneBy({ id: tripId })
+      trip = await this.tripRepository.findOne({ where: { id: tripId } });
+      if (!trip) throw new NotFoundException(`Trip with id ${tripId} not found`);
+    }
 
-      if (!trip) throw new NotFoundException(`Trip with id ${tripId} not found`)
+    let user: User | null = null;
+    if (userId) {
+      user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) throw new NotFoundException(`User with id ${userId} not found`);
     }
 
     const luggage = await this.luggageRepository.preload({
       id,
       ...luggageData,
       ...(trip ? { trip } : {}),
-    })
+      ...(user ? { user } : {}),
+    });
 
-    if (!luggage){
-      throw new NotFoundException(`Luggage with id ${id} not found`)
+    if (!luggage) {
+      throw new NotFoundException(`Luggage with id ${id} not found`);
     }
 
-    await this.luggageRepository.save(luggage)
-    return luggage
+    await this.luggageRepository.save(luggage);
+    return luggage;
   }
 
   async remove(id: string) {
@@ -92,5 +130,6 @@ export class LuggageService {
     }
 
     this.luggageRepository.remove(luggage)
+    return { message: `Luggage with id ${id} has been removed` };
   }
 }
