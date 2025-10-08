@@ -10,6 +10,7 @@ import { TripsModule } from './trips/trips.module';
 import { PlacesModule } from './places/places.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { AuthModule } from './auth/auth.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -42,7 +43,9 @@ import { AuthModule } from './auth/auth.module';
 
     ActivitiesModule,
 
-    AuthModule
+    AuthModule,
+
+    SeedModule
   ],
 })
 export class AppModule {}
