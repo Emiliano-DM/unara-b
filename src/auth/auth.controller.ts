@@ -10,6 +10,8 @@ import { UserRoleGuard } from './guards/user-role/user-role.guard';
 import { ValidRoles } from './enums/valid-roles.enum';
 import { Auth } from './decoradors/auth.decorador';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 
 @Controller('auth')
@@ -35,5 +37,15 @@ export class AuthController {
   @Post('refresh')
   refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshToken(refreshTokenDto);
+  }
+
+  @Post('forgot-password')
+  forgotPassword(@Body() forgotPasswordDto:ForgotPasswordDto){
+    return this.authService.forgotPassword(forgotPasswordDto)
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() resetPasswordDto:ResetPasswordDto){
+    return this.authService.resetPassword(resetPasswordDto)
   }
 }

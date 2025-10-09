@@ -37,6 +37,12 @@ export class User {
   @Column({type:'text', nullable: true, select: false })
   refresh_token?: string
 
+  @Column({type:'text', nullable:true,select:false})
+  password_reset_token?: string | null
+
+  @Column({type:'timestamp', nullable:true, select:false})
+  password_reset_expires?: Date | null
+
   @Column({ type: "text", nullable: true })
   profile_picture?: string;
 

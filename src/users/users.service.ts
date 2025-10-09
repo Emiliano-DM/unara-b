@@ -108,4 +108,18 @@ export class UsersService {
 
     return user;
   }
+
+
+  async findOneWithResetToken(id:string){
+    const user = await this.userRepository.findOne({
+      where:{id},
+      select: ['id','email','username','password_reset_token','password_reset_expires']
+    })
+    
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    return user;
+  }
 }
