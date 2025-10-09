@@ -43,6 +43,15 @@ export class User {
   @Column({type:'timestamp', nullable:true, select:false})
   password_reset_expires?: Date | null
 
+  @Column({type:'bool', default:false})
+  isEmailVerified: boolean
+
+  @Column({type:'text', nullable:true,select:false})
+  emailVerificationToken?: string | null
+  
+  @Column({type:'timestamp', nullable:true, select:false})
+  emailVerificationExpires?: Date | null
+
   @Column({ type: "text", nullable: true })
   profile_picture?: string;
 

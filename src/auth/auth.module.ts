@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   controllers: [AuthController],
@@ -31,8 +32,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       signOptions: { expiresIn: configService.get('JWT_ACCESS_EXPIRES_IN') }
       }
     }
-  }),
-    UsersModule
+    }),
+    UsersModule,
+    MailModule
   ],
   exports: [TypeOrmModule, JwtStrategy, PassportModule, JwtModule]
 })

@@ -122,4 +122,11 @@ export class UsersService {
 
     return user;
   }
+
+  async findOneWithVerificationToken(id: string) {
+    return await this.userRepository.findOne({
+      where: { id },
+      select: ['id', 'email', 'emailVerificationToken', 'emailVerificationExpires', 'isEmailVerified']
+    });
+  }
 }

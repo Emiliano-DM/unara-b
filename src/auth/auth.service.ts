@@ -9,6 +9,8 @@ import { ConfigService } from '@nestjs/config';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { MailService } from 'src/mail/mail.service';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 
 
 
@@ -18,7 +20,8 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly mailService: MailService
   ){}
 
   async createAccount(registerDto:RegisterDto){
@@ -27,8 +30,14 @@ export class AuthService {
     const createdUser = await this.usersService.create({...registerDto, password: hashedPassword})
     const refreshToken = this.generateRefreshToken({id: createdUser.id, email: createdUser.email})
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
+    const validateToken = this.generateVerificationToken({id: createdUser.id, email:createdUser.email})
+    const hashedValidateToken = await bcrypt.hash(validateToken, 10)
 
-    await this.usersService.update(createdUser.id, { refresh_token: hashedRefreshToken })
+    
+
+    await this.usersService.update(createdUser.id, { refresh_token: hashedRefreshToken, emailVerificationToken:hashedValidateToken, emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000) })
+
+    await this.mailService.sendVerificationEmail(createdUser.email, validateToken)
 
     return {
       id: createdUser.id, 
@@ -135,6 +144,35 @@ export class AuthService {
     return { message: 'Password reset successful' }
   }
 
+  async verifyEmail(verifyEmailDto:VerifyEmailDto) {
+
+    let payload: JwtPayload
+    try{
+      payload = this.jwtService.verify(verifyEmailDto.token, { secret: this.configService.get('JWT_VERIFICATION_SECRET') });
+
+    } catch(error){
+      throw new UnauthorizedException('Invalid Token')
+    }
+
+    const user = await this.usersService.findOneWithVerificationToken(payload.id)
+    if (!user)
+      throw new UnauthorizedException('Invalid or expired verification token')
+
+    if (!user.emailVerificationToken || !user.emailVerificationExpires)
+      throw new UnauthorizedException('Invalid or expired verification token')
+
+    const isVerificationTokenValid = await bcrypt.compare(verifyEmailDto.token, user.emailVerificationToken);
+    if (!isVerificationTokenValid)
+      throw new UnauthorizedException('Token invalid')
+    if (user.emailVerificationExpires < new Date())
+      throw new UnauthorizedException('Token expired')
+
+    await this.usersService.update(user.id, {isEmailVerified:true,emailVerificationToken:null, emailVerificationExpires:null})
+    
+    return { message: 'Email verified successfully' }
+  }
+
+
   private generateAccessToken(payload: JwtPayload){
     return this.jwtService.sign(payload);
   }
@@ -146,5 +184,10 @@ export class AuthService {
     })
   }
 
- 
+  private generateVerificationToken(payload: JwtPayload) {
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_VERIFICATION_SECRET'),
+      expiresIn: '24h'
+    });
+  }
 }
