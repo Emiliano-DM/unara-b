@@ -83,7 +83,7 @@ export class AuthService {
       });
 
     
-      const user = await this.usersService.findOne(payload.id); // Need to modify to include refresh_token
+      const user = await this.usersService.findOneWithRefreshToken(payload.id); 
 
       if (!user.refresh_token) {
         throw new UnauthorizedException('Invalid refresh token');
