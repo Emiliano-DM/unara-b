@@ -18,7 +18,8 @@ export class CreateUserDto {
 
     @IsString()
     @IsNotEmpty()
-    password: string
+    @IsOptional()
+    password?: string
 
     @IsString()
     @IsOptional()
@@ -32,4 +33,8 @@ export class CreateUserDto {
     @IsBoolean()
     @IsOptional()
     isActive?:boolean
+
+    @IsBoolean()
+    @IsOptional()
+    isEmailVerified?: boolean
 }
