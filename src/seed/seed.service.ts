@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { MOCK_USERS } from './data/user.data';
-import { MOCK_TRIPS } from './data/trip.data';
+import { createMockTrip } from './data/trip.data';
 import { MOCK_ITEM_CATEGORIES } from './data/item-category.data';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { ItemCategory } from 'src/item-categories/entities/item-category.entity';
@@ -17,6 +17,8 @@ import { LuggageItem } from 'src/luggage/entities/luggage-item.entity';
 import { Activity } from 'src/activities/entities/activity.entity';
 import { createMockLuggageItems } from './data/luggage-item.data';
 import { createMockActivities } from './data/activity.data';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
 export class SeedService {
@@ -45,9 +47,15 @@ export class SeedService {
             try {
                 console.log('Starting database seed...');
 
-                const users_data = MOCK_USERS;
-                const trip_data = MOCK_TRIPS;
+                let users_data = MOCK_USERS;
+                
                 const item_categories_data = MOCK_ITEM_CATEGORIES;
+
+                //Encrypting user passwords
+                await Promise.all(users_data.map(async user=>{
+                    user.password =  await bcrypt.hash(user.password as string, 10)
+                }))
+
 
                 //Clearing database (delete in reverse dependency order)
                 console.log('Clearing existing data...');
@@ -64,20 +72,20 @@ export class SeedService {
                 //Independent entities
                 //TODO: change trip to be dependent by user
                 console.log('Seeding users...');
-                await manager.getRepository(User).insert(users_data);
+                const savedUsers = await manager.getRepository(User).save(users_data);
                 console.log(`${users_data.length} users created`);
-
-                console.log('Seeding trips...');
-                const savedTrips = await manager.getRepository(Trip).save(trip_data);
-                console.log(`${savedTrips.length} trips created`);
 
                 console.log('Seeding item categories...');
                 const savedCategories = await manager.getRepository(ItemCategory).save(item_categories_data);
                 console.log(`${savedCategories.length} item categories created`);
 
                 //Dependent entities
+                console.log('Seeding trips...');
+                const savedTrips = await manager.getRepository(Trip).save(createMockTrip(savedUsers));
+                console.log(`${savedTrips.length} trips created`);
+
                 console.log('Seeding places...');
-                const places = createMockPlaces(savedTrips);
+                const places = createMockPlaces(savedTrips, savedUsers);
                 const savedPlaces = await manager.getRepository(Place).save(places);
                 console.log(`${savedPlaces.length} places created`);
 
@@ -87,12 +95,12 @@ export class SeedService {
                 console.log(`${savedItems.length} items created`);
 
                 console.log('Seeding luggage...');
-                const luggage = createMockLuggage(savedTrips);
+                const luggage = createMockLuggage(savedTrips, savedUsers);
                 const savedLuggages = await manager.getRepository(Luggage).save(luggage);
                 console.log(`${savedLuggages.length} luggage lists created`);
 
                 console.log('Seeding activities...');
-                const activities = createMockActivities(savedTrips, savedPlaces);
+                const activities = createMockActivities(savedTrips, savedPlaces, savedUsers);
                 const savedActivities = await manager.getRepository(Activity).save(activities);
                 console.log(`${savedActivities.length} activities created`);
 

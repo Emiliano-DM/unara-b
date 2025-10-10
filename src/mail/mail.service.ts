@@ -43,4 +43,28 @@ export class MailService {
   };
   await this.transporter.sendMail(mailOptions)
   }
+
+    async sendForgottenPasswordEmail(email:string, token:string){
+    const verificationUrl = `${this.configService.get('FRONTEND_URL')}/forgot-password-email?token=${token}`;
+    const mailOptions = {
+    from: `"Unara" <${this.configService.get('MAIL_USER')}>`,
+    to: email,
+    subject: 'Reset Your Password - Unara',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Reset Your Password</h2>
+          <p>Click the button below to reset your password. This link expires in 15 minutes.</p>
+          <a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            Reset your password
+          </a>
+          <p>Or copy this link: ${verificationUrl}</p>
+          <p>Link expires in 15 minutes.</p>
+        </body>
+      </html>
+    `
+  };
+  await this.transporter.sendMail(mailOptions)
+  }
 }

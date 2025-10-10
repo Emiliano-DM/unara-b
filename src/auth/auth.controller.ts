@@ -1,18 +1,16 @@
-import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from './decoradors/get-user.decorador';
 import { User } from 'src/users/entities/user.entity';
-import { RoleProtected } from './decoradors/role-protected.decorator';
-import { UserRoleGuard } from './guards/user-role/user-role.guard';
 import { ValidRoles } from './enums/valid-roles.enum';
 import { Auth } from './decoradors/auth.decorador';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 
 @Controller('auth')
@@ -53,5 +51,16 @@ export class AuthController {
   @Post('verify-email')
   verifyEmail(@Body() verifyEmailDto:VerifyEmailDto ){
     return this.authService.verifyEmail(verifyEmailDto)
+  }
+
+  @Post('resend-verification-email')
+  resendVerificationEmail(@Body() resendVerificationDto: ResendVerificationDto){
+    return this.authService.resendVerification(resendVerificationDto)
+  }
+
+  @Get('user/me')
+  @Auth(ValidRoles.user)
+  getPersonalInfo(@GetUser() user:User){
+    return this.authService.getPersonalAccountInfo(user)
   }
 }

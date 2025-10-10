@@ -1,13 +1,15 @@
 import { Place } from 'src/places/entities/place.entity';
 import { Trip } from 'src/trips/entities/trip.entity';
+import { User } from 'src/users/entities/user.entity';
 
-export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
+export const createMockPlaces = (trips: Trip[], users: User[]): Partial<Place>[] => [
   {
     name: 'Eiffel Tower',
     description: 'Iconic iron lattice tower on the Champ de Mars',
     latitude: 48.858844,
     longitude: 2.294351,
     trip: trips[0], // Summer Paris Adventure
+    user: users[3],
   },
   {
     name: 'Louvre Museum',
@@ -15,6 +17,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 48.860611,
     longitude: 2.337644,
     trip: trips[0], // Summer Paris Adventure
+    user: users[1],
   },
   {
     name: 'Senso-ji Temple',
@@ -22,6 +25,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 35.714765,
     longitude: 139.796661,
     trip: trips[1], // Tokyo Cherry Blossom Tour
+    user: users[1],
   },
   {
     name: 'Shibuya Crossing',
@@ -29,6 +33,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 35.659515,
     longitude: 139.700474,
     trip: trips[1], // Tokyo Cherry Blossom Tour
+    user: users[2],
   },
   {
     name: 'Central Park',
@@ -36,6 +41,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 40.785091,
     longitude: -73.968285,
     trip: trips[2], // New York City Weekend
+    user: users[2],
   },
   {
     name: 'Statue of Liberty',
@@ -43,6 +49,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 40.689247,
     longitude: -74.044502,
     trip: trips[2], // New York City Weekend
+    user: users[2],
   },
   {
     name: 'Sagrada Familia',
@@ -50,6 +57,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 41.403629,
     longitude: 2.174356,
     trip: trips[3], // Barcelona Beach Getaway
+    user: users[4],
   },
   {
     name: 'Barceloneta Beach',
@@ -57,6 +65,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 41.377491,
     longitude: 2.190640,
     trip: trips[3], // Barcelona Beach Getaway
+    user: users[3],
   },
   {
     name: 'Colosseum',
@@ -64,6 +73,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 41.890210,
     longitude: 12.492231,
     trip: trips[4], // Rome Historical Journey
+    user: users[0],
   },
   {
     name: 'Trevi Fountain',
@@ -71,6 +81,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 41.900932,
     longitude: 12.483313,
     trip: trips[4], // Rome Historical Journey
+    user: users[1],
   },
   {
     name: 'Blue Lagoon',
@@ -78,6 +89,7 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 63.880686,
     longitude: -22.449337,
     trip: trips[5], // Iceland Northern Lights
+    user: users[0],
   },
   {
     name: 'Hallgrímskirkja',
@@ -85,5 +97,6 @@ export const createMockPlaces = (trips: Trip[]): Partial<Place>[] => [
     latitude: 64.141667,
     longitude: -21.926944,
     trip: trips[5], // Iceland Northern Lights
+    user: users[1],
   },
 ];

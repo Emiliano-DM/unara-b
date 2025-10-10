@@ -11,6 +11,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from 'src/mail/mail.service';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { User } from 'src/users/entities/user.entity';
+import {ResendVerificationDto} from './dto/resend-verification.dto';
 
 
 
@@ -59,6 +61,15 @@ export class AuthService {
     if (!isPasswordValid){
       throw new UnauthorizedException('Invalid credentials')
     }
+
+    if(!user.isEmailVerified){
+      throw new UnauthorizedException('Email not verified')
+    }
+
+    if (!user.isActive){
+      throw new UnauthorizedException('Invalid credentials')
+    }
+
     const refreshToken = this.generateRefreshToken({id: user.id, email: user.email})
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
 
@@ -116,6 +127,7 @@ export class AuthService {
       password_reset_expires: expiresAt
     });
 
+    await this.mailService.sendForgottenPasswordEmail(user.email, resetToken)
     return { message: 'If email exists, reset link has been sent', token:`${resetToken}` }
   }
 
@@ -172,6 +184,34 @@ export class AuthService {
     return { message: 'Email verified successfully' }
   }
 
+  async resendVerification(resendVerificaitonDto:ResendVerificationDto){
+    const user = await this.usersService.findByEmail(resendVerificaitonDto.email)
+    if (!user){
+      throw new UnauthorizedException('Invalid credential')
+    }
+    
+    const resendToken = this.generateVerificationToken({email:user.email, id:user.id})
+    const hashedResendToken = await bcrypt.hash(resendToken,10)
+    await this.usersService.update(user.id, {emailVerificationToken:hashedResendToken, 
+      emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000)})
+
+    await this.mailService.sendVerificationEmail(user.email, resendToken)
+
+    return {message: 'If email exists, verification email has been sent'}
+  }
+
+  async getPersonalAccountInfo(user:User){
+    return {
+      id: user.id, 
+      email: user.email, 
+      username: user.username, 
+      fullname: user.fullname, 
+      profile_picture: user.profile_picture, 
+      isEmailVerified: user.isEmailVerified, 
+      roles: user.roles, 
+      createdAt: user.createdAt
+    }
+  }
 
   private generateAccessToken(payload: JwtPayload){
     return this.jwtService.sign(payload);

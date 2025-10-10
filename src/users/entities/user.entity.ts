@@ -52,6 +52,9 @@ export class User {
   @Column({type:'timestamp', nullable:true, select:false})
   emailVerificationExpires?: Date | null
 
+  @Column({type:'bool', default:true})
+  isActive: boolean
+
   @Column({ type: "text", nullable: true })
   profile_picture?: string;
 
