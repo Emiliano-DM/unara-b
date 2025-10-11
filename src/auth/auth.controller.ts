@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get} from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -11,6 +11,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 
 @Controller('auth')
@@ -25,6 +26,16 @@ export class AuthController {
   @Post('/login')
   accessAccount(@Body() loginDto:LoginDto){
     return this.authService.accessAccount(loginDto)
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleLogin(){}
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  googleCallback(@GetUser() user:User){
+    return this.authService.googleCallback(user)
   }
 
   @Post('/logout')

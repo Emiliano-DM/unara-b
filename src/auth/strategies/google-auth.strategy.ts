@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { Strategy } from 'passport-google-oauth20';
 import {User} from 'src/users/entities/user.entity';
@@ -17,7 +17,7 @@ export class GoogleAuthStrategy extends PassportStrategy(Strategy, 'google'){
       throw new Error('GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALLBACK_URL must be defined')
     }
     super({
-      clientId: configService.get('GOOGLE_CLIENT_ID'),
+      clientID: configService.get('GOOGLE_CLIENT_ID'),
       clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
       callbackURL: configService.get('GOOGLE_CALLBACK_URL'),
       scope: ['email','profile']

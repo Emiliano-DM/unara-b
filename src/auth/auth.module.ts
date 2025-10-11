@@ -9,10 +9,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailModule } from 'src/mail/mail.module';
+import { GoogleAuthStrategy } from './strategies/google-auth.strategy';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleAuthStrategy],
   imports: [
     ConfigModule,
 

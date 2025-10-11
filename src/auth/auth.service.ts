@@ -84,6 +84,20 @@ export class AuthService {
     }
   }
 
+  async googleCallback(user:User){
+    const payload = {email:user.email, id:user.id}
+    
+    const refreshToken = this.generateRefreshToken(payload)
+    const hashedRefreshToken = await bcrypt.hash(refreshToken,10)
+    await this.usersService.update(user.id,{refresh_token:hashedRefreshToken})
+    return { 
+      id: user.id,
+      email: user.email, 
+      username: user.username, 
+      access_token: this.generateAccessToken(payload), 
+      refresh_token: refreshToken }
+  }
+
   async refreshToken(refreshTokenDto: RefreshTokenDto) {
     const { refresh_token } = refreshTokenDto;
 
