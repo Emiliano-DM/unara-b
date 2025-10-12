@@ -12,6 +12,8 @@ import { ActivitiesModule } from './activities/activities.module';
 import { AuthModule } from './auth/auth.module';
 import { SeedModule } from './seed/seed.module';
 import { MailModule } from './mail/mail.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -48,7 +50,11 @@ import { MailModule } from './mail/mail.module';
 
     SeedModule,
 
-    MailModule
+    MailModule,
+
+    CloudinaryModule,
+
+    FilesModule
   ],
 })
 export class AppModule {}
