@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,6 +6,8 @@ import { Trip } from './entities/trip.entity';
 import { In, Repository } from 'typeorm';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { User } from 'src/users/entities/user.entity';
+import {FilesService} from 'src/files/files.service';
+import {CloudinaryProvider} from 'src/cloudinary/cloudinary.provider';
 
 @Injectable()
 export class TripsService {
@@ -16,7 +18,10 @@ export class TripsService {
     private readonly tripRepository: Repository<Trip>,
 
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
+    private readonly filesService:FilesService,
+    private readonly cloudinaryProvider:CloudinaryProvider
+
   ){}
 
   async create(dto: CreateTripDto) {
@@ -119,5 +124,24 @@ export class TripsService {
     }
 
     this.tripRepository.remove(trip)
+  }
+
+  async addTripPhoto(image: Express.Multer.File, tripId: string, userId: string) {
+    const {publicId, url} = await this.cloudinaryProvider.uploadImage(image)
+    const trip = await this.tripRepository.findOneBy({id:tripId})
+    const user:User | null = await this.userRepository.findOneBy({id:userId})
+    if (!user){
+        throw new UnauthorizedException('Invalid User')
+    }
+    await this.filesService.saveFileMetadata(
+        url,
+        user,
+        'image',
+        image.size,
+        image.mimetype,
+        publicId
+    )
+    
+    await
   }
 }

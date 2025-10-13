@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, UseFilters } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, UseFilters, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -6,6 +6,8 @@ import { FilterUserDto } from './dto/filter-user.dto';
 import { DatabaseExceptionFilter } from 'src/common/filters/db-exception.filter';
 import { Auth } from 'src/auth/decoradors/auth.decorador';
 import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { GetUser } from 'src/auth/decoradors/get-user.decorador';
 
 @UseFilters(new DatabaseExceptionFilter('Users'))
 @Controller('users')
@@ -48,4 +50,12 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
+
+  @Post('me/profile-image')
+  @Auth(ValidRoles.user)
+  @UseInterceptors(FileInterceptor('image'))
+  addProfileImage(@UploadedFile() image: Express.Multer.File, @GetUser() id:string){
+    return this.usersService.addProfileImage(image, id)
+  }
+
 }

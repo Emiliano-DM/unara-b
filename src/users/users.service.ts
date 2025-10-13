@@ -1,17 +1,22 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { FilterUserDto } from './dto/filter-user.dto';
+import { FilesService } from 'src/files/files.service';
+import { CloudinaryProvider } from 'src/cloudinary/cloudinary.provider';
+import { use } from 'passport';
 
 @Injectable()
 export class UsersService {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
+    private readonly filesService:FilesService,
+    private readonly cloudinaryProvider:CloudinaryProvider
   ){}
 
   async create(dto: CreateUserDto) {
@@ -128,5 +133,23 @@ export class UsersService {
       where: { id },
       select: ['id', 'email', 'emailVerificationToken', 'emailVerificationExpires', 'isEmailVerified']
     });
+  }
+
+  async addProfileImage(image: Express.Multer.File, id:string){
+    const {publicId, url} = await this.cloudinaryProvider.uploadImage(image)
+    const user:User|null = await this.userRepository.findOneBy({id})
+    if (!user){
+      throw new UnauthorizedException('Invalid user')
+    }
+    await this.filesService.saveFileMetadata(
+      url,
+      user,
+      'profile_photo',
+      image.size,
+      image.mimetype,
+      publicId
+    )
+    await this.userRepository.update(user.id, {profile_picture: url})
+    return user
   }
 }

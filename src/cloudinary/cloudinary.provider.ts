@@ -18,6 +18,9 @@ export class CloudinaryProvider{
 
     async uploadImage(file:Express.Multer.File){
         const data = await cloudinary.uploader.upload(file.path)
-        return data.secure_url
+        return {
+            url:data.secure_url,
+            publicId: data.public_id
+        }
     }
 }

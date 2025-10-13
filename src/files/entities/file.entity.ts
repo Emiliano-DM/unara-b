@@ -1,13 +1,10 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { User } from "src/users/entities/user.entity";
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class File {
     @PrimaryGeneratedColumn('uuid')
     id:string;
-
-    @Column({type:'text' })
-    @Index()
-    user_id: string;
     
     @Column({type:'text'})
     @Index()
@@ -28,6 +25,16 @@ export class File {
 
     @Column({type:'text'})
     mime_type: string;
+
+    @ManyToOne(
+        ()=> User,
+        {cascade:true}
+    )
+    @JoinColumn(
+        { name: 'user_id' }
+    )
+    user: User
+    
 
     @CreateDateColumn()
     created_at: Date;

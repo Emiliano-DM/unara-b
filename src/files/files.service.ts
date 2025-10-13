@@ -1,26 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { CreateFileDto } from './dto/create-file.dto';
-import { UpdateFileDto } from './dto/update-file.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/users/entities/user.entity';
+import { Repository } from 'typeorm';
+import { File } from './entities/file.entity';
+
 
 @Injectable()
 export class FilesService {
-  create(createFileDto: CreateFileDto) {
-    return 'This action adds a new file';
-  }
+  constructor(
+    @InjectRepository(File)
+    private readonly fileRepository:Repository<File>
+  ){}
+  async saveFileMetadata(url:string, user:User, entityType: string, fileSize:number, mimeType:string, cloudinaryPublicId:string, entityId?:string){
+    const file = this.fileRepository.create({
+      url,
+      user,
+      entity_type: entityType,
+      file_size: fileSize,
+      mime_type: mimeType,
+      cloudinary_public_id: cloudinaryPublicId,
+      entity_id: entityId
 
-  findAll() {
-    return `This action returns all files`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} file`;
-  }
-
-  update(id: number, updateFileDto: UpdateFileDto) {
-    return `This action updates a #${id} file`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} file`;
+    })
+    return await this.fileRepository.save(file)
   }
 }

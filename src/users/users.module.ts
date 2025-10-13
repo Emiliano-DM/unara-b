@@ -4,7 +4,8 @@ import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
+import { FilesModule } from 'src/files/files.module';
 
 
 @Module({
@@ -12,7 +13,9 @@ import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
   providers: [UsersService],
   imports: [
     TypeOrmModule.forFeature([ User ]),
-    PassportModule.register({defaultStrategy:'jwt'})
+    PassportModule.register({defaultStrategy:'jwt'}),
+    CloudinaryModule,
+    FilesModule
   ],
   exports: [UsersService]
 })
