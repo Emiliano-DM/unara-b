@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -127,21 +127,58 @@ export class TripsService {
   }
 
   async addTripPhoto(image: Express.Multer.File, tripId: string, userId: string) {
-    const {publicId, url} = await this.cloudinaryProvider.uploadImage(image)
-    const trip = await this.tripRepository.findOneBy({id:tripId})
+    const {publicId, url} = await this.cloudinaryProvider.uploadFile(image)
+    const trip = await this.tripRepository.findOne({where: {id:tripId}, relations: {users: true}})
     const user:User | null = await this.userRepository.findOneBy({id:userId})
     if (!user){
         throw new UnauthorizedException('Invalid User')
     }
+    if (!trip){
+        throw new NotFoundException('Invalid trip')
+    }
+
+    if (!trip.users.some(u => u.id === user.id)) {
+        throw new UnauthorizedException('The user is not part of the trip')
+    }
     await this.filesService.saveFileMetadata(
         url,
         user,
-        'image',
+        'trip_profile_photo',
         image.size,
         image.mimetype,
-        publicId
+        publicId,
+        trip.id
     )
     
-    await
+    await this.tripRepository.update(trip.id, {trip_photo: url})
+    return trip
+  }
+
+  async addTripDocuments(files: Express.Multer.File[], tripId: string, userId:string, isPrivate?:boolean){
+    const uploadResults = await Promise.all(files.map(file => this.cloudinaryProvider.uploadFile(file)))
+    const trip = await this.tripRepository.findOne({where: {id:tripId}, relations: {users: true}})
+    const user:User | null = await this.userRepository.findOneBy({id:userId})
+        if (!user){
+        throw new UnauthorizedException('Invalid User')
+    }
+    if (!trip){
+        throw new NotFoundException('Invalid trip')
+    }
+
+    if (!trip.users.some(u => u.id === user.id)) {
+        throw new UnauthorizedException('The user is not part of the trip')
+    }
+    await Promise.all(uploadResults.map((uploadResult, index) => this.filesService.saveFileMetadata(
+        uploadResult.url,
+        user,
+        'trip_files',
+        files[index].size,
+        files[index].mimetype,
+        uploadResult.publicId,
+        trip.id,
+        isPrivate
+    )))
+
+    return trip
   }
 }

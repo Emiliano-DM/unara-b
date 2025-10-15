@@ -23,6 +23,9 @@ export class Trip {
 
     @Column({ type: 'timestamptz' })
     endDate: Date;
+
+    @Column({type:'text', nullable:true})
+    trip_photo?: string
     
     @OneToMany(
         () => Place, 

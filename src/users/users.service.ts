@@ -85,7 +85,9 @@ export class UsersService {
         'id',
         'email',
         'username',
-        'password'
+        'password',
+        'isEmailVerified',
+        'isActive'
       ]
     })
   }
@@ -136,7 +138,7 @@ export class UsersService {
   }
 
   async addProfileImage(image: Express.Multer.File, id:string){
-    const {publicId, url} = await this.cloudinaryProvider.uploadImage(image)
+    const {publicId, url} = await this.cloudinaryProvider.uploadFile(image)
     const user:User|null = await this.userRepository.findOneBy({id})
     if (!user){
       throw new UnauthorizedException('Invalid user')
@@ -147,7 +149,8 @@ export class UsersService {
       'profile_photo',
       image.size,
       image.mimetype,
-      publicId
+      publicId,
+      user.id
     )
     await this.userRepository.update(user.id, {profile_picture: url})
     return user

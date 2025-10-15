@@ -26,6 +26,9 @@ export class File {
     @Column({type:'text'})
     mime_type: string;
 
+    @Column({type:'bool', default:false})
+    is_private: boolean;
+
     @ManyToOne(
         ()=> User,
         {cascade:true}

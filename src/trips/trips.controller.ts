@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseUUIDPipe, UseFilters, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseUUIDPipe, UseFilters, UseInterceptors, UploadedFile, UploadedFiles, UsePipes } from '@nestjs/common';
 import { TripsService } from './trips.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
@@ -6,8 +6,9 @@ import { FilterTripDto } from './dto/filter-trip.dto';
 import { DatabaseExceptionFilter } from 'src/common/filters/db-exception.filter';
 import { Auth } from 'src/auth/decoradors/auth.decorador';
 import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { GetUser } from 'src/auth/decoradors/get-user.decorador';
+import { FileValidation } from 'src/common/pipes/file-validation.pipe';
 
 @UseFilters(new DatabaseExceptionFilter('Trips'))
 @Controller('trips')
@@ -52,5 +53,13 @@ export class TripsController {
   @UseInterceptors(FileInterceptor('image'))
   addTripPhoto(@UploadedFile() image:Express.Multer.File, @Param('id') tripId:string, @GetUser() userId:string){
     return this.tripsService.addTripPhoto(image, tripId, userId)
+  }
+
+  @Post(':id/documents')
+  @Auth(ValidRoles.user)
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @UsePipes(new FileValidation())
+  addTripDocuments(@UploadedFiles() files:Express.Multer.File[], @Param('id') tripId:string, @GetUser() userId:string, @Body('isPrivate') isPrivate:boolean){
+    return this.tripsService.addTripDocuments(files, tripId, userId, isPrivate)
   }
 }

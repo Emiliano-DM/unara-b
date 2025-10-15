@@ -8,6 +8,7 @@ import { Auth } from 'src/auth/decoradors/auth.decorador';
 import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GetUser } from 'src/auth/decoradors/get-user.decorador';
+import { User } from './entities/user.entity';
 
 @UseFilters(new DatabaseExceptionFilter('Users'))
 @Controller('users')
@@ -54,8 +55,8 @@ export class UsersController {
   @Post('me/profile-image')
   @Auth(ValidRoles.user)
   @UseInterceptors(FileInterceptor('image'))
-  addProfileImage(@UploadedFile() image: Express.Multer.File, @GetUser() id:string){
-    return this.usersService.addProfileImage(image, id)
+  addProfileImage(@UploadedFile() image: Express.Multer.File, @GetUser() user:User){
+    return this.usersService.addProfileImage(image, user.id)
   }
 
 }
