@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { ArrayNotEmpty, ArrayUnique, IsArray, IsDate, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 import { IsAfter } from "src/common/validators/is-after.validator";
 
 export class CreateTripDto {
@@ -33,4 +33,12 @@ export class CreateTripDto {
     @ArrayUnique()
     @IsUUID("all", { each: true })
     userIds: string[];
+
+    @IsNumber()
+    @IsOptional()
+    destination_latitude?: number
+
+    @IsNumber()
+    @IsOptional()
+    destination_longitude?: number
 }

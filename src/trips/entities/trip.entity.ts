@@ -18,6 +18,12 @@ export class Trip {
     @Column({ type: 'text' })
     destination: string
 
+    @Column({type:'decimal', precision:9, scale:6, nullable:true})
+    destination_latitude?:number
+
+    @Column({type:'decimal', precision:9, scale:6, nullable:true})
+    destination_longitude?:number
+
     @Column({ type: 'timestamptz' })
     startDate: Date;
 
