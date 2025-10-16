@@ -1,6 +1,7 @@
 import { Activity } from "src/activities/entities/activity.entity";
 import { Luggage } from "src/luggage/entities/luggage.entity";
 import { Place } from "src/places/entities/place.entity";
+import { Survey } from "src/surveys/entities/survey.entity";
 import { Trip } from "src/trips/entities/trip.entity";
 import {
   BeforeInsert,
@@ -69,6 +70,9 @@ export class User {
 
   @OneToMany(() => Place, (place) => place.user, { cascade: true })
   places: Place[];
+
+  @OneToMany(() => Survey, survey => survey.user)
+  surveys: Survey[]
 
 
   @BeforeInsert()

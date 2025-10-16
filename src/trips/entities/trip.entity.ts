@@ -3,6 +3,7 @@ import { Luggage } from "src/luggage/entities/luggage.entity";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Activity } from "src/activities/entities/activity.entity";
 import { User } from "src/users/entities/user.entity";
+import { Survey } from "src/surveys/entities/survey.entity";
 
 @Entity()
 export class Trip {
@@ -58,6 +59,9 @@ export class Trip {
         activity => activity.trip
     )
     activities: Activity[]
+
+    @OneToMany(() => Survey, survey => survey.trip)
+    surveys: Survey[]
 
     @CreateDateColumn()
     createdAt: Date

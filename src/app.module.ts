@@ -14,6 +14,7 @@ import { SeedModule } from './seed/seed.module';
 import { MailModule } from './mail/mail.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { FilesModule } from './files/files.module';
+import { SurveysModule } from './surveys/surveys.module';
 
 @Module({
   imports: [
@@ -54,7 +55,9 @@ import { FilesModule } from './files/files.module';
 
     CloudinaryModule,
 
-    FilesModule
+    FilesModule,
+
+    SurveysModule
   ],
 })
 export class AppModule {}
