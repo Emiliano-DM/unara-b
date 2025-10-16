@@ -39,6 +39,19 @@ export class FilesService {
     return file.cloudinary_public_id
   }
 
+  async getUserFiles(userId: string){
+    return await this.fileRepository.find({
+      where: { user: { id: userId } },
+      order: { created_at: 'DESC' }
+    })
+  }
+  
+  async findByUrlAndUser(url: string, userId: string){
+    return await this.fileRepository.findOne({
+      where: { url, user: { id: userId } }
+    })
+  }
+
   async deleteFileComplete(fileId:string, userId:string) {
     const publicId = await this.deleteFileMetadata(fileId, userId)
     return this.cloudinaryProvider.deleteFile(fileId, publicId)

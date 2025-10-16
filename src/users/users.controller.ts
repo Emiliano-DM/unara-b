@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, UseFilters, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, UseFilters, UseInterceptors, UploadedFile, UsePipes } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -9,6 +9,7 @@ import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GetUser } from 'src/auth/decoradors/get-user.decorador';
 import { User } from './entities/user.entity';
+import { ProfileImageValidation } from 'src/common/pipes/profile-image-validation.pipe';
 
 @UseFilters(new DatabaseExceptionFilter('Users'))
 @Controller('users')
@@ -55,7 +56,7 @@ export class UsersController {
   @Post('me/profile-image')
   @Auth(ValidRoles.user)
   @UseInterceptors(FileInterceptor('image'))
-  addProfileImage(@UploadedFile() image: Express.Multer.File, @GetUser() user:User){
+  addProfileImage(@UploadedFile(new ProfileImageValidation()) image: Express.Multer.File, @GetUser() user:User){
     return this.usersService.addProfileImage(image, user.id)
   }
 

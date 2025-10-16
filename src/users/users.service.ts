@@ -138,10 +138,18 @@ export class UsersService {
   }
 
   async addProfileImage(image: Express.Multer.File, id:string){
-    const {publicId, url} = await this.cloudinaryProvider.uploadFile(image)
+
+    const {publicId, url} = await this.cloudinaryProvider.uploadFile(image, 'profile')
     const user:User|null = await this.userRepository.findOneBy({id})
     if (!user){
       throw new UnauthorizedException('Invalid user')
+    }
+    if (user.profile_picture){
+      const oldFile = await this.filesService.findByUrlAndUser(user.profile_picture, user.id)
+      if (oldFile) {
+        await this.cloudinaryProvider.deleteFile(oldFile.id, oldFile.cloudinary_public_id)
+        await this.filesService.deleteFileMetadata(oldFile.id, user.id)
+      }
     }
     await this.filesService.saveFileMetadata(
       url,

@@ -3,6 +3,7 @@ import { FilesService } from './files.service';
 import { GetUser } from 'src/auth/decoradors/get-user.decorador';
 import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
 import { Auth } from 'src/auth/decoradors/auth.decorador';
+import { User } from 'src/users/entities/user.entity';
 
 
 
@@ -12,9 +13,15 @@ export class FilesController {
     private readonly filesService: FilesService
   ) {}
   
+  @Get('my-files')
+  @Auth(ValidRoles.user)
+  getMyFiles(@GetUser() user: User){
+    return this.filesService.getUserFiles(user.id)
+  }
+
   @Delete(':id')
   @Auth(ValidRoles.user)
-  deleteFileComplete(@Param('id') fileId: string, @GetUser() userId:string){
-    return this.filesService.deleteFileComplete(fileId, userId)
+  deleteFileComplete(@Param('id') fileId: string, @GetUser() user:User){
+    return this.filesService.deleteFileComplete(fileId, user.id)
   }
 }

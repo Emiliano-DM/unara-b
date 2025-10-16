@@ -127,7 +127,7 @@ export class TripsService {
   }
 
   async addTripPhoto(image: Express.Multer.File, tripId: string, userId: string) {
-    const {publicId, url} = await this.cloudinaryProvider.uploadFile(image)
+    const {publicId, url} = await this.cloudinaryProvider.uploadFile(image, 'trip')
     const trip = await this.tripRepository.findOne({where: {id:tripId}, relations: {users: true}})
     const user:User | null = await this.userRepository.findOneBy({id:userId})
     if (!user){
@@ -139,6 +139,13 @@ export class TripsService {
 
     if (!trip.users.some(u => u.id === user.id)) {
         throw new UnauthorizedException('The user is not part of the trip')
+    }
+    if (trip.trip_photo){
+      const oldFile = await this.filesService.findByUrlAndUser(trip.trip_photo, user.id)
+      if (oldFile) {
+        await this.cloudinaryProvider.deleteFile(oldFile.id, oldFile.cloudinary_public_id)
+        await this.filesService.deleteFileMetadata(oldFile.id, user.id)
+      }
     }
     await this.filesService.saveFileMetadata(
         url,
@@ -168,6 +175,7 @@ export class TripsService {
     if (!trip.users.some(u => u.id === user.id)) {
         throw new UnauthorizedException('The user is not part of the trip')
     }
+
     await Promise.all(uploadResults.map((uploadResult, index) => this.filesService.saveFileMetadata(
         uploadResult.url,
         user,

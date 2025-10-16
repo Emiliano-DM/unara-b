@@ -8,7 +8,9 @@ import { Auth } from 'src/auth/decoradors/auth.decorador';
 import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { GetUser } from 'src/auth/decoradors/get-user.decorador';
-import { FileValidation } from 'src/common/pipes/file-validation.pipe';
+import { DocumentValidation } from 'src/common/pipes/document-validation.pipe';
+import { TripImageValidation } from 'src/common/pipes/trip-image-validation.pipe';
+import { User } from 'src/users/entities/user.entity';
 
 @UseFilters(new DatabaseExceptionFilter('Trips'))
 @Controller('trips')
@@ -51,15 +53,14 @@ export class TripsController {
   @Post(':id/trip-photo')
   @Auth(ValidRoles.user)
   @UseInterceptors(FileInterceptor('image'))
-  addTripPhoto(@UploadedFile() image:Express.Multer.File, @Param('id') tripId:string, @GetUser() userId:string){
-    return this.tripsService.addTripPhoto(image, tripId, userId)
+  addTripPhoto(@UploadedFile(new TripImageValidation()) image:Express.Multer.File, @Param('id') tripId:string, @GetUser() user :User){
+    return this.tripsService.addTripPhoto(image, tripId, user.id)
   }
 
   @Post(':id/documents')
   @Auth(ValidRoles.user)
   @UseInterceptors(FilesInterceptor('files', 10))
-  @UsePipes(new FileValidation())
-  addTripDocuments(@UploadedFiles() files:Express.Multer.File[], @Param('id') tripId:string, @GetUser() userId:string, @Body('isPrivate') isPrivate:boolean){
-    return this.tripsService.addTripDocuments(files, tripId, userId, isPrivate)
+  addTripDocuments(@UploadedFiles(new DocumentValidation()) files:Express.Multer.File[], @Param('id') tripId:string, @GetUser() user:User, @Body('isPrivate') isPrivate:boolean){
+    return this.tripsService.addTripDocuments(files, tripId, user.id, isPrivate)
   }
 }

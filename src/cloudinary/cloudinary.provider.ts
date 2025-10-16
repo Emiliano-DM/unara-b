@@ -17,9 +17,10 @@ export class CloudinaryProvider{
         })
     }
 
-    async uploadFile(file:Express.Multer.File){
-        const data = await new Promise<any>((resolve, reject) => { const stream = cloudinary.uploader.upload_stream((error, result) => { if (error) reject(error); else resolve(result); }); 
-             streamifier.createReadStream(file.buffer).pipe(stream); })
+    async uploadFile(file:Express.Multer.File, transformationType?: 'profile' | 'trip' ){
+        const transformationResult = this.getTransformations(transformationType)
+        const data = await new Promise<any>((resolve, reject) => { const stream = cloudinary.uploader.upload_stream(transformationResult,(error, result) => { if (error) reject(error); else resolve(result); }); 
+            streamifier.createReadStream(file.buffer).pipe(stream); })
         return {
             url:data.secure_url,
             publicId: data.public_id
@@ -28,5 +29,16 @@ export class CloudinaryProvider{
 
     async deleteFile(fileId: string, publicId: string){
         await cloudinary.uploader.destroy(publicId)
+    }
+
+    private getTransformations(type?: 'profile' | 'trip' ){
+        switch(type){
+            case 'profile':
+                return {width: 500, height: 500, crop:'fill', gravity:'face'}
+            case 'trip':
+                return {width:1200, height: 800, crop: 'limit'}
+            default:
+                return {}
+        }
     }
 }
