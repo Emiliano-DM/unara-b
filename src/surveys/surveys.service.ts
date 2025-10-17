@@ -111,7 +111,7 @@ export class SurveysService {
   async closeSurvey(surveyId:string){
     const survey = await this.surveyRepository.findOne({
       where: {id:surveyId}, 
-      relations: {options:true}
+      relations: {options:true, trip:true}
     })
     if (!survey){
       throw new NotFoundException('survey not found')
@@ -119,8 +119,21 @@ export class SurveysService {
     if (survey.closed){
       throw new BadRequestException('survey already closed')
     }
-    return await this.calculateWinner(survey)
-    
+    const winnerOption = await this.calculateWinner(survey)
+    if (survey.category === 'Destination'){
+      survey.trip.destination_latitude = winnerOption.latitude
+      survey.trip.destination_longitude = winnerOption.longitude
+      survey.trip.destination = winnerOption.text
+      await this.tripRepository.save(survey.trip)
+    }else if (survey.category === 'Dates'){
+      if (!winnerOption.datetime || !winnerOption.endDatetime) {
+        throw new BadRequestException('Date range required for Dates survey')
+      }
+      survey.trip.startDate = winnerOption.datetime
+      survey.trip.endDate = winnerOption.endDatetime
+      await this.tripRepository.save(survey.trip)
+    }
+    return winnerOption
   }
 
   private async calculateWinner(survey:Survey){

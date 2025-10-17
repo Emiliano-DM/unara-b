@@ -17,13 +17,16 @@ class CreateSurveyOptionDto {
 
     @IsOptional()
     datetime?: Date;
+
+    @IsOptional()
+    endDatetime?: Date;
 }
 
 export class CreateSurveyDto {
     @IsString()
     question: string;
 
-    @IsEnum(['Destino', 'Fechas', 'General'])
+    @IsEnum(['Destination', 'Dates', 'General'])
     category: string;
 
     @IsEnum(['text', 'location', 'datetime'])

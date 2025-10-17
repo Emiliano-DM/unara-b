@@ -26,6 +26,9 @@ export class SurveyOption {
     @Column({ type: 'timestamp', nullable: true })
     datetime?: Date  
 
+    @Column({ type: 'timestamp', nullable: true })
+    endDatetime?: Date  
+
     @ManyToOne(() => Survey, survey => survey.options, { onDelete: 'CASCADE' })
     survey: Survey
 
