@@ -1,34 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Param } from '@nestjs/common';
 import { SurveysService } from './surveys.service';
-import { CreateSurveyDto } from './dto/create-survey.dto';
-import { UpdateSurveyDto } from './dto/update-survey.dto';
+import { VoteDto } from './dto/vote.dto';
+import { GetUser } from 'src/auth/decoradors/get-user.decorador';
+import { User } from 'src/users/entities/user.entity';
+import { ValidRoles } from 'src/auth/enums/valid-roles.enum';
+import { Auth } from 'src/auth/decoradors/auth.decorador';
 
 @Controller('surveys')
 export class SurveysController {
   constructor(private readonly surveysService: SurveysService) {}
 
-  @Post()
-  create(@Body() createSurveyDto: CreateSurveyDto) {
-    return this.surveysService.create(createSurveyDto);
+  @Post(':id/vote')
+  @Auth(ValidRoles.user)
+  vote(@Param('id') id:string , @GetUser() user:User ,@Body() voteDto: VoteDto ) {
+    return this.surveysService.vote(id, user.id, voteDto.optionId);
   }
 
-  @Get()
-  findAll() {
-    return this.surveysService.findAll();
+  @Post(':id/close')
+  @Auth(ValidRoles.user)
+  closeSurvey(@Param('id') id:string){
+    return this.surveysService.closeSurvey(id)
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.surveysService.findOne(+id);
-  }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSurveyDto: UpdateSurveyDto) {
-    return this.surveysService.update(+id, updateSurveyDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.surveysService.remove(+id);
-  }
 }

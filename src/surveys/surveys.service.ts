@@ -107,4 +107,33 @@ export class SurveysService {
     return vote
 
   }
+
+  async closeSurvey(surveyId:string){
+    const survey = await this.surveyRepository.findOne({
+      where: {id:surveyId}, 
+      relations: {options:true}
+    })
+    if (!survey){
+      throw new NotFoundException('survey not found')
+    }
+    if (survey.closed){
+      throw new BadRequestException('survey already closed')
+    }
+    return await this.calculateWinner(survey)
+    
+  }
+
+  private async calculateWinner(survey:Survey){
+    if (survey.options.length === 0){
+      throw new BadRequestException('Survey has no options')
+    }
+    const maxOptionVotes = Math.max(...survey.options.map(opt=> opt.votes))
+    const mostVotedOptions = survey.options.filter(opt => opt.votes === maxOptionVotes)
+    const winner = mostVotedOptions[Math.floor(Math.random()*mostVotedOptions.length)]
+    survey.closed = true
+    await this.surveyRepository.save(survey)
+    
+    return winner
+  }
+
 }

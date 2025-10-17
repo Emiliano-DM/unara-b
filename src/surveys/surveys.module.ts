@@ -21,6 +21,7 @@ import { AuthModule } from 'src/auth/auth.module';
         Place
       ]),
       AuthModule
-    ]
+    ],
+    exports: [SurveysService]
   })
 export class SurveysModule {}

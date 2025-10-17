@@ -11,11 +11,16 @@ import { GetUser } from 'src/auth/decoradors/get-user.decorador';
 import { DocumentValidation } from 'src/common/pipes/document-validation.pipe';
 import { TripImageValidation } from 'src/common/pipes/trip-image-validation.pipe';
 import { User } from 'src/users/entities/user.entity';
+import { SurveysService } from 'src/surveys/surveys.service';
+import { CreateSurveyDto } from 'src/surveys/dto/create-survey.dto';
 
 @UseFilters(new DatabaseExceptionFilter('Trips'))
 @Controller('trips')
 export class TripsController {
-  constructor(private readonly tripsService: TripsService) {}
+  constructor(
+    private readonly tripsService: TripsService,
+    private readonly surveysService: SurveysService
+  ) {}
 
   @Post()
   @Auth(ValidRoles.user)
@@ -63,4 +68,17 @@ export class TripsController {
   addTripDocuments(@UploadedFiles(new DocumentValidation()) files:Express.Multer.File[], @Param('id') tripId:string, @GetUser() user:User, @Body('isPrivate') isPrivate:boolean){
     return this.tripsService.addTripDocuments(files, tripId, user.id, isPrivate)
   }
+
+  @Post(':tripId/surveys')
+  @Auth(ValidRoles.user)
+  createSurvey(@Param('tripId') tripId:string,@GetUser() user:User, @Body() createSurveyDto:CreateSurveyDto){
+    return this.surveysService.create(tripId,user.id,createSurveyDto)
+  }
+
+  @Get(':tripId/surveys')
+  @Auth(ValidRoles.user)
+  findAllSurveys(@Param('tripId') tripId:string){
+    return this.surveysService.findAll(tripId)
+  }
+
 }
