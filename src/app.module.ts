@@ -15,6 +15,7 @@ import { MailModule } from './mail/mail.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { FilesModule } from './files/files.module';
 import { SurveysModule } from './surveys/surveys.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -57,7 +58,9 @@ import { SurveysModule } from './surveys/surveys.module';
 
     FilesModule,
 
-    SurveysModule
+    SurveysModule,
+
+    EventsModule
   ],
 })
 export class AppModule {}

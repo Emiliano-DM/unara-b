@@ -7,18 +7,20 @@ import { Trip } from 'src/trips/entities/trip.entity';
 import { Place } from 'src/places/entities/place.entity';
 import { User } from 'src/users/entities/user.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { EventsModule } from 'src/events/events.module';
 
 @Module({
   controllers: [ActivitiesController],
   providers: [ActivitiesService],
   imports: [
-    TypeOrmModule.forFeature([ 
-      Activity, 
-      Trip, 
+    TypeOrmModule.forFeature([
+      Activity,
+      Trip,
       Place,
       User,
     ]),
-    AuthModule
+    AuthModule,
+    EventsModule
   ]
 })
 export class ActivitiesModule {}

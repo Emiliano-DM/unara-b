@@ -8,6 +8,7 @@ import { Trip } from 'src/trips/entities/trip.entity';
 import { Place } from 'src/places/entities/place.entity';
 import { User } from 'src/users/entities/user.entity';
 import { FilterActivityDto } from './dto/filter-activity.dto';
+import { EventsGateway } from 'src/events/events.gateway';
 
 @Injectable()
 export class ActivitiesService {
@@ -23,6 +24,8 @@ export class ActivitiesService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async create(dto: CreateActivityDto) {
@@ -48,6 +51,16 @@ export class ActivitiesService {
     });
 
     await this.activityRepository.save(activity);
+
+    // Emit WebSocket event
+    this.eventsGateway.emitActivityAdded(tripId, userId, {
+      activityId: activity.id,
+      name: activity.name,
+      date: activity.date,
+      placeId: activity.place?.id,
+      description: activity.description,
+    });
+
     return activity;
   }
 
@@ -113,6 +126,20 @@ export class ActivitiesService {
 
     try {
       await this.activityRepository.save(activity);
+
+      // Emit WebSocket event
+      const finalTripId = trip?.id || activity.trip?.id;
+      const finalUserId = user?.id || activity.user?.id;
+
+      if (finalTripId && finalUserId) {
+        this.eventsGateway.emitActivityUpdated(finalTripId, finalUserId, {
+          activityId: activity.id,
+          name: activity.name,
+          date: activity.date,
+          placeId: activity.place?.id,
+          description: activity.description,
+        });
+      }
     } catch (error) {
       throw new InternalServerErrorException('Error updating activity');
     }
@@ -121,10 +148,26 @@ export class ActivitiesService {
   }
 
   async remove(id: string) {
-    const activity = await this.activityRepository.findOneBy({ id });
+    const activity = await this.activityRepository.findOne({
+      where: { id },
+      relations: { trip: true, user: true, place: true }
+    });
     if (!activity) throw new NotFoundException(`Activity with id ${id} not found`);
 
+    const activityData = {
+      activityId: activity.id,
+      name: activity.name,
+      date: activity.date,
+      placeId: activity.place?.id,
+    };
+
     await this.activityRepository.remove(activity);
+
+    // Emit WebSocket event
+    if (activity.trip?.id && activity.user?.id) {
+      this.eventsGateway.emitActivityRemoved(activity.trip.id, activity.user.id, activityData);
+    }
+
     return { message: `Activity with id ${id} has been removed` };
   }
 }

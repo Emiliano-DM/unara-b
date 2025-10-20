@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { FilterPlaceDto } from './dto/filter-place.dto';
 import { User } from 'src/users/entities/user.entity';
+import { EventsGateway } from 'src/events/events.gateway';
 
 @Injectable()
 export class PlacesService {
@@ -20,6 +21,8 @@ export class PlacesService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly eventsGateway: EventsGateway,
   ){}
 
   async create(dto: CreatePlaceDto) {
@@ -42,6 +45,16 @@ export class PlacesService {
       });
 
       await this.placeRepository.save(place);
+
+      // Emit WebSocket event
+      this.eventsGateway.emitPlaceAdded(tripId, userId, {
+        placeId: place.id,
+        name: place.name,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        description: place.description,
+      });
+
       return place;
   }
 
@@ -86,6 +99,10 @@ export class PlacesService {
   async update(id: string, dto: UpdatePlaceDto) {
     const { tripId, userId, ...placeData } = dto;
 
+    if (!tripId) {
+      throw new NotFoundException('Trip ID is required');
+    }
+
     const trip = await this.tripRepository.findOne({ where: { id: tripId } });
     if (!trip) throw new NotFoundException(`Trip with id ${tripId} not found`);
 
@@ -106,6 +123,18 @@ export class PlacesService {
 
     try {
       await this.placeRepository.save(place);
+
+      // Emit WebSocket event
+      const finalUserId = userId || place.user?.id;
+      if (finalUserId) {
+        this.eventsGateway.emitPlaceUpdated(tripId, finalUserId, {
+          placeId: place.id,
+          name: place.name,
+          latitude: place.latitude,
+          longitude: place.longitude,
+          description: place.description,
+        });
+      }
     } catch (error) {
       throw new InternalServerErrorException('Error updating place');
     }
@@ -114,13 +143,27 @@ export class PlacesService {
   }
   
   async remove(id: string) {
-    const place = await this.placeRepository.findOneBy({ id });
+    const place = await this.placeRepository.findOne({
+      where: { id },
+      relations: { trip: true, user: true }
+    });
 
     if (!place) {
       throw new NotFoundException(`Place with id ${id} not found`);
     }
 
+    const placeData = {
+      placeId: place.id,
+      name: place.name,
+      latitude: place.latitude,
+      longitude: place.longitude,
+    };
+
     await this.placeRepository.remove(place);
+
+    // Emit WebSocket event
+    this.eventsGateway.emitPlaceRemoved(place.trip.id, place.user?.id, placeData);
+
     return { message: `Place with id ${id} has been removed` };
   }
 }

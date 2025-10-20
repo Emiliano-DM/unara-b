@@ -18,8 +18,8 @@ export class SurveysController {
 
   @Post(':id/close')
   @Auth(ValidRoles.user)
-  closeSurvey(@Param('id') id:string){
-    return this.surveysService.closeSurvey(id)
+  closeSurvey(@Param('id') id:string, @GetUser() user:User){
+    return this.surveysService.closeSurvey(id, user.id)
   }
 
 

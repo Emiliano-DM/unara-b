@@ -6,17 +6,19 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { User } from 'src/users/entities/user.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { EventsModule } from 'src/events/events.module';
 
 @Module({
   controllers: [PlacesController],
   providers: [PlacesService],
   imports: [
-    TypeOrmModule.forFeature([ 
-      Place, 
-      Trip, 
-      User 
+    TypeOrmModule.forFeature([
+      Place,
+      Trip,
+      User
     ]),
-    AuthModule
+    AuthModule,
+    EventsModule
   ]
 })
 export class PlacesModule {}

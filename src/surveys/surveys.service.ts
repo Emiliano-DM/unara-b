@@ -3,9 +3,10 @@ import { CreateSurveyDto } from './dto/create-survey.dto';
 import { UpdateSurveyDto } from './dto/update-survey.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Survey, SurveyOption, SurveyVote } from './entities';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { User } from 'src/users/entities/user.entity';
+import { EventsGateway } from 'src/events/events.gateway';
 
 
 @Injectable()
@@ -13,18 +14,21 @@ export class SurveysService {
   constructor(
     @InjectRepository(Survey)
     private readonly surveyRepository: Repository<Survey>,
-    
+
     @InjectRepository(SurveyOption)
     private readonly optionRepository: Repository<SurveyOption>,
-    
+
     @InjectRepository(SurveyVote)
     private readonly voteRepository: Repository<SurveyVote>,
-    
+
     @InjectRepository(Trip)
     private readonly tripRepository: Repository<Trip>,
-    
+
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly eventsGateway: EventsGateway,
+    private readonly dataSource: DataSource,
   ) {}
 
 
@@ -52,6 +56,14 @@ export class SurveysService {
     })
 
     await this.surveyRepository.save(survey)
+
+    // Emit WebSocket event
+    this.eventsGateway.emitSurveyCreated(tripId, userId, {
+      surveyId: survey.id,
+      question: survey.question,
+      category: survey.category,
+    });
+
     return survey
   }
 
@@ -76,7 +88,10 @@ export class SurveysService {
   }
 
   async vote(surveyId:string, userId:string, optionId:string){
-    const survey = await this.surveyRepository.findOneBy({id:surveyId})
+    const survey = await this.surveyRepository.findOne({
+      where: {id:surveyId},
+      relations: {trip: true}
+    })
     if (!survey){
       throw new NotFoundException('survey not found')
     }
@@ -95,7 +110,7 @@ export class SurveysService {
     if (existingVote){
       throw new BadRequestException('Already voted')
     }
-    
+
     const option = await this.optionRepository.findOneBy({id:optionId})
     if (!option){
       throw new NotFoundException('Option not found')
@@ -104,39 +119,97 @@ export class SurveysService {
     option.votes += 1
     await this.optionRepository.save(option)
     await this.voteRepository.save(vote)
+
+    // Emit WebSocket event
+    this.eventsGateway.emitSurveyVoted(survey.trip.id, userId, {
+      surveyId: survey.id,
+      optionId: option.id,
+      votes: option.votes,
+    });
+
     return vote
 
   }
 
-  async closeSurvey(surveyId:string){
-    const survey = await this.surveyRepository.findOne({
-      where: {id:surveyId}, 
-      relations: {options:true, trip:true}
-    })
-    if (!survey){
-      throw new NotFoundException('survey not found')
-    }
-    if (survey.closed){
-      throw new BadRequestException('survey already closed')
-    }
-    const winnerOption = await this.calculateWinner(survey)
-    if (survey.category === 'Destination'){
-      survey.trip.destination_latitude = winnerOption.latitude
-      survey.trip.destination_longitude = winnerOption.longitude
-      survey.trip.destination = winnerOption.text
-      await this.tripRepository.save(survey.trip)
-    }else if (survey.category === 'Dates'){
-      if (!winnerOption.datetime || !winnerOption.endDatetime) {
-        throw new BadRequestException('Date range required for Dates survey')
+  async closeSurvey(surveyId:string, userId:string){
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const survey = await queryRunner.manager.findOne(Survey, {
+        where: {id:surveyId},
+        relations: {options:true, trip:true}
+      })
+      if (!survey){
+        throw new NotFoundException('survey not found')
       }
-      survey.trip.startDate = winnerOption.datetime
-      survey.trip.endDate = winnerOption.endDatetime
-      await this.tripRepository.save(survey.trip)
+      if (survey.closed){
+        throw new BadRequestException('survey already closed')
+      }
+
+      const winnerOption = await this.calculateWinner(survey, queryRunner);
+
+      const tripChanges: any = {};
+
+      if (survey.category === 'Destination'){
+        survey.trip.destination_latitude = winnerOption.latitude;
+        survey.trip.destination_longitude = winnerOption.longitude;
+        survey.trip.destination = winnerOption.text;
+        await queryRunner.manager.save(survey.trip);
+
+        tripChanges.destination = winnerOption.text;
+        tripChanges.destination_latitude = winnerOption.latitude;
+        tripChanges.destination_longitude = winnerOption.longitude;
+      }else if (survey.category === 'Dates'){
+        if (!winnerOption.datetime || !winnerOption.endDatetime) {
+          throw new BadRequestException('Date range required for Dates survey')
+        }
+        survey.trip.startDate = winnerOption.datetime;
+        survey.trip.endDate = winnerOption.endDatetime;
+        await queryRunner.manager.save(survey.trip);
+
+        tripChanges.startDate = winnerOption.datetime;
+        tripChanges.endDate = winnerOption.endDatetime;
+      }
+
+      await queryRunner.commitTransaction();
+
+      // Emit WebSocket events AFTER successful commit
+      this.eventsGateway.emitSurveyClosed(survey.trip.id, userId, {
+        surveyId: survey.id,
+        question: survey.question,
+        category: survey.category,
+        closed: true,
+        winningOption: {
+          id: winnerOption.id,
+          text: winnerOption.text,
+          latitude: winnerOption.latitude,
+          longitude: winnerOption.longitude,
+          datetime: winnerOption.datetime,
+          endDatetime: winnerOption.endDatetime,
+        },
+      });
+
+      if (Object.keys(tripChanges).length > 0) {
+        this.eventsGateway.emitTripUpdated(survey.trip.id, userId, {
+          tripId: survey.trip.id,
+          changes: tripChanges,
+          reason: 'survey_result',
+          surveyId: survey.id,
+        });
+      }
+
+      return winnerOption;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-    return winnerOption
   }
 
-  private async calculateWinner(survey:Survey){
+  private async calculateWinner(survey:Survey, queryRunner: any){
     if (survey.options.length === 0){
       throw new BadRequestException('Survey has no options')
     }
@@ -144,8 +217,8 @@ export class SurveysService {
     const mostVotedOptions = survey.options.filter(opt => opt.votes === maxOptionVotes)
     const winner = mostVotedOptions[Math.floor(Math.random()*mostVotedOptions.length)]
     survey.closed = true
-    await this.surveyRepository.save(survey)
-    
+    await queryRunner.manager.save(survey)
+
     return winner
   }
 

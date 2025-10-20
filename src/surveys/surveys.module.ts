@@ -7,6 +7,7 @@ import { Trip } from 'src/trips/entities/trip.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Place } from 'src/places/entities/place.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { EventsModule } from 'src/events/events.module';
 
 @Module({
     controllers: [SurveysController],
@@ -20,7 +21,8 @@ import { AuthModule } from 'src/auth/auth.module';
         User,
         Place
       ]),
-      AuthModule
+      AuthModule,
+      EventsModule
     ],
     exports: [SurveysService]
   })
