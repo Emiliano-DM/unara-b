@@ -16,8 +16,8 @@ export class Trip {
     @Column({ type: 'text', nullable: true })
     description?: string
 
-    @Column({ type: 'text' })
-    destination: string
+    @Column({ type: 'text', nullable: true })
+    destination?: string
 
     @Column({type:'decimal', precision:9, scale:6, nullable:true})
     destination_latitude?:number
@@ -25,11 +25,11 @@ export class Trip {
     @Column({type:'decimal', precision:9, scale:6, nullable:true})
     destination_longitude?:number
 
-    @Column({ type: 'timestamptz' })
-    startDate: Date;
+    @Column({ type: 'timestamptz', nullable: true })
+    startDate?: Date;
 
-    @Column({ type: 'timestamptz' })
-    endDate: Date;
+    @Column({ type: 'timestamptz', nullable: true })
+    endDate?: Date;
 
     @Column({type:'text', nullable:true})
     trip_photo?: string

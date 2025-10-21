@@ -12,21 +12,21 @@ export class CreateTripDto {
     @IsString()
     description?: string;
 
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
     @MaxLength(255)
-    destination: string;
+    destination?: string;
 
+    @IsOptional()
     @IsDate()
     @Type(() => Date)
-    @IsNotEmpty()
-    startDate: Date;
+    startDate?: Date;
 
+    @IsOptional()
     @IsDate()
     @Type(() => Date)
-    @IsNotEmpty()
     @IsAfter('startDate')
-    endDate: Date;
+    endDate?: Date;
 
     @IsArray()
     @ArrayNotEmpty()
