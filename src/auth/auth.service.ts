@@ -12,7 +12,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from 'src/mail/mail.service';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { User } from 'src/users/entities/user.entity';
-import {ResendVerificationDto} from './dto/resend-verification.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { SocialAuthDto } from './dto/social-auth.dto';
 
 
 
@@ -27,24 +28,28 @@ export class AuthService {
   ){}
 
   async createAccount(registerDto:RegisterDto){
-    
+
     const hashedPassword = await bcrypt.hash(registerDto.password, 10)
     const createdUser = await this.usersService.create({...registerDto, password: hashedPassword})
     const refreshToken = this.generateRefreshToken({id: createdUser.id, email: createdUser.email})
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
-    const validateToken = this.generateVerificationToken({id: createdUser.id, email:createdUser.email})
-    const hashedValidateToken = await bcrypt.hash(validateToken, 10)
 
-    
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedCode = await bcrypt.hash(verificationCode, 10)
 
-    await this.usersService.update(createdUser.id, { refresh_token: hashedRefreshToken, emailVerificationToken:hashedValidateToken, emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000) })
+    await this.usersService.update(createdUser.id, {
+      refresh_token: hashedRefreshToken,
+      emailVerificationToken: hashedCode,
+      emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000)
+    })
 
-    await this.mailService.sendVerificationEmail(createdUser.email, validateToken)
+    await this.mailService.sendVerificationEmail(createdUser.email, verificationCode)
 
     return {
-      id: createdUser.id, 
-      email: createdUser.email, 
-      username: createdUser.username, 
+      id: createdUser.id,
+      email: createdUser.email,
+      username: createdUser.username,
       access_token: this.generateAccessToken({id:createdUser.id, email:createdUser.email}),
       refresh_token: refreshToken
     }
@@ -84,17 +89,57 @@ export class AuthService {
     }
   }
 
+  async socialAuth(socialAuthDto: SocialAuthDto) {
+    // For mobile apps, verify the access token and create/login user
+    const { provider, access_token, user_info } = socialAuthDto;
+
+    if (!user_info || !user_info.email) {
+      throw new UnauthorizedException('Invalid user info from social provider');
+    }
+
+    // Find or create user
+    let user = await this.usersService.findByEmail(user_info.email);
+    let isNewUser = false;
+
+    if (!user) {
+      // Create new user from social auth
+      user = await this.usersService.create({
+        email: user_info.email,
+        fullname: user_info.name || user_info.given_name || user_info.email.split('@')[0],
+        username: user_info.email.split('@')[0],
+        isEmailVerified: true, // Social auth emails are pre-verified
+      });
+      isNewUser = true;
+    }
+
+    // Generate tokens
+    const payload = { email: user.email, id: user.id };
+    const refreshToken = this.generateRefreshToken(payload);
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
+    await this.usersService.update(user.id, { refresh_token: hashedRefreshToken });
+
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      access_token: this.generateAccessToken(payload),
+      refresh_token: refreshToken,
+      isNewUser
+    };
+  }
+
   async googleCallback(user:User){
     const payload = {email:user.email, id:user.id}
-    
+
     const refreshToken = this.generateRefreshToken(payload)
     const hashedRefreshToken = await bcrypt.hash(refreshToken,10)
     await this.usersService.update(user.id,{refresh_token:hashedRefreshToken})
-    return { 
+    return {
       id: user.id,
-      email: user.email, 
-      username: user.username, 
-      access_token: this.generateAccessToken(payload), 
+      email: user.email,
+      username: user.username,
+      access_token: this.generateAccessToken(payload),
       refresh_token: refreshToken }
   }
 
@@ -171,30 +216,27 @@ export class AuthService {
   }
 
   async verifyEmail(verifyEmailDto:VerifyEmailDto) {
-
-    let payload: JwtPayload
-    try{
-      payload = this.jwtService.verify(verifyEmailDto.token, { secret: this.configService.get('JWT_VERIFICATION_SECRET') });
-
-    } catch(error){
-      throw new UnauthorizedException('Invalid Token')
-    }
-
-    const user = await this.usersService.findOneWithVerificationToken(payload.id)
+    const user = await this.usersService.findByEmail(verifyEmailDto.email)
     if (!user)
-      throw new UnauthorizedException('Invalid or expired verification token')
+      throw new UnauthorizedException('Invalid email')
 
     if (!user.emailVerificationToken || !user.emailVerificationExpires)
-      throw new UnauthorizedException('Invalid or expired verification token')
+      throw new UnauthorizedException('No verification code found')
 
-    const isVerificationTokenValid = await bcrypt.compare(verifyEmailDto.token, user.emailVerificationToken);
-    if (!isVerificationTokenValid)
-      throw new UnauthorizedException('Token invalid')
     if (user.emailVerificationExpires < new Date())
-      throw new UnauthorizedException('Token expired')
+      throw new UnauthorizedException('Code expired')
+
+    console.log('Received code:', verifyEmailDto.code);
+    console.log('Stored hash:', user.emailVerificationToken);
+
+    const isCodeValid = await bcrypt.compare(verifyEmailDto.code, user.emailVerificationToken);
+    console.log('Code valid:', isCodeValid);
+
+    if (!isCodeValid)
+      throw new UnauthorizedException('Invalid verification code')
 
     await this.usersService.update(user.id, {isEmailVerified:true,emailVerificationToken:null, emailVerificationExpires:null})
-    
+
     return { message: 'Email verified successfully' }
   }
 
@@ -203,13 +245,14 @@ export class AuthService {
     if (!user){
       throw new UnauthorizedException('Invalid credential')
     }
-    
-    const resendToken = this.generateVerificationToken({email:user.email, id:user.id})
-    const hashedResendToken = await bcrypt.hash(resendToken,10)
-    await this.usersService.update(user.id, {emailVerificationToken:hashedResendToken, 
+
+    // Generate new 6-digit code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedCode = await bcrypt.hash(verificationCode, 10)
+    await this.usersService.update(user.id, {emailVerificationToken:hashedCode,
       emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000)})
 
-    await this.mailService.sendVerificationEmail(user.email, resendToken)
+    await this.mailService.sendVerificationEmail(user.email, verificationCode)
 
     return {message: 'If email exists, verification email has been sent'}
   }

@@ -87,7 +87,9 @@ export class UsersService {
         'username',
         'password',
         'isEmailVerified',
-        'isActive'
+        'isActive',
+        'emailVerificationToken',
+        'emailVerificationExpires'
       ]
     })
   }

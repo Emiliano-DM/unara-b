@@ -24,6 +24,6 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0'); // Listen on all network interfaces
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📡 WebSocket server ready on: ws://localhost:${port}`);
-  console.log(`📱 Mobile devices can connect to: http://192.168.151.104:${port}`);
+  console.log(`📱 Mobile devices can connect to: http://192.168.1.133:${port}`);
 }
 bootstrap();
