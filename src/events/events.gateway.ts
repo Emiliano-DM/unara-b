@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger, UseGuards } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { TripEventPayload, TripEventType } from './interfaces/trip-events.interface';
 import { JoinTripRoomDto, LeaveTripRoomDto } from './dto/trip-event.dto';
 
@@ -26,7 +27,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(EventsGateway.name);
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async handleConnection(client: Socket) {
     try {
@@ -40,7 +44,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       // Verify JWT token
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.get('JWT_ACCESS_SECRET'),
+      });
 
       // Store user data in socket
       client.data.userId = payload.sub;
