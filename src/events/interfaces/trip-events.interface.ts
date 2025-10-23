@@ -20,6 +20,17 @@ export enum TripEventType {
   // Member events
   MEMBER_JOINED = 'member:joined',
   MEMBER_LEFT = 'member:left',
+
+  // Luggage events
+  LUGGAGE_CREATED = 'luggage:created',
+  LUGGAGE_UPDATED = 'luggage:updated',
+  LUGGAGE_ITEM_ADDED = 'luggage:item_added',
+  LUGGAGE_ITEM_PACKED = 'luggage:item_packed',
+  LUGGAGE_NOTE_ADDED = 'luggage:note_added',
+
+  // Document events
+  DOCUMENT_UPLOADED = 'document:uploaded',
+  DOCUMENT_DELETED = 'document:deleted',
 }
 
 export interface TripEventPayload<T = any> {
@@ -72,4 +83,24 @@ export interface TripUpdateEventData {
   };
   reason: 'survey_result' | 'manual_update';
   surveyId?: string;
+}
+
+export interface LuggageEventData {
+  luggageId: string;
+  name: string;
+  is_shared: boolean;
+  userId: string;
+  itemId?: string;
+  itemName?: string;
+  packed?: boolean;
+  note?: string;
+}
+
+export interface DocumentEventData {
+  fileId: string;
+  fileName: string;
+  category?: string;
+  transportType?: string;
+  url: string;
+  userId: string;
 }

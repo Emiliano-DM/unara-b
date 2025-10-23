@@ -7,10 +7,11 @@ import { FilterLuggageDto } from '../dto/filter-luggage.dto';
 import { UpdateLuggageDto } from '../dto/update-luggage.dto';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { User } from 'src/users/entities/user.entity';
+import { EventsGateway } from 'src/events/events.gateway';
 
 @Injectable()
 export class LuggageService {
-  
+
   constructor(
     @InjectRepository(Luggage)
     private readonly luggageRepository: Repository<Luggage>,
@@ -20,6 +21,8 @@ export class LuggageService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly eventsGateway: EventsGateway,
   ){}
 
   async create(dto: CreateLuggageDto) {
@@ -45,6 +48,17 @@ export class LuggageService {
     });
 
     await this.luggageRepository.save(luggage);
+
+    // Emit WebSocket event if luggage is linked to a trip
+    if (trip) {
+      this.eventsGateway.emitLuggageCreated(trip.id, user.id, {
+        luggageId: luggage.id,
+        name: luggage.name,
+        is_shared: luggage.is_shared || false,
+        userId: user.id,
+      });
+    }
+
     return luggage;
   }
 
@@ -119,6 +133,17 @@ export class LuggageService {
     }
 
     await this.luggageRepository.save(luggage);
+
+    // Emit WebSocket event if luggage is linked to a trip
+    if (luggage.trip) {
+      this.eventsGateway.emitLuggageUpdated(luggage.trip.id, luggage.user.id, {
+        luggageId: luggage.id,
+        name: luggage.name,
+        is_shared: luggage.is_shared || false,
+        userId: luggage.user.id,
+      });
+    }
+
     return luggage;
   }
 

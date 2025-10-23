@@ -15,12 +15,15 @@ export class LuggageItem {
     luggage: Luggage;
     
     @ManyToOne(
-        () => Item, 
-        item => item.luggageItems, 
+        () => Item,
+        item => item.luggageItems,
         { onDelete: 'CASCADE' }
     )
     item: Item;
-    
+
     @Column({ default: 1 })
     quantity: number;
+
+    @Column({ default: false })
+    packed: boolean;
 }

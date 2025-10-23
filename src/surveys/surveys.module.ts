@@ -6,6 +6,7 @@ import { Survey, SurveyOption, SurveyVote } from './entities';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Place } from 'src/places/entities/place.entity';
+import { Activity } from 'src/activities/entities/activity.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { EventsModule } from 'src/events/events.module';
 
@@ -19,7 +20,8 @@ import { EventsModule } from 'src/events/events.module';
         SurveyVote,
         Trip,
         User,
-        Place
+        Place,
+        Activity
       ]),
       AuthModule,
       EventsModule

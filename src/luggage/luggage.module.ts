@@ -10,6 +10,7 @@ import { ItemsModule } from 'src/items/items.module';
 import { Trip } from 'src/trips/entities/trip.entity';
 import { User } from 'src/users/entities/user.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { EventsModule } from 'src/events/events.module';
 
 @Module({
   controllers: [
@@ -21,14 +22,15 @@ import { AuthModule } from 'src/auth/auth.module';
     LuggageItemsService,
   ],
   imports: [
-    TypeOrmModule.forFeature([ 
+    TypeOrmModule.forFeature([
       Luggage,
       LuggageItem,
       Trip,
       User,
     ]),
     ItemsModule,
-    AuthModule
+    AuthModule,
+    EventsModule
   ]
 })
 export class LuggageModule {}

@@ -29,6 +29,15 @@ export class File {
     @Column({type:'bool', default:false})
     is_private: boolean;
 
+    @Column({type:'text', nullable: true})
+    category: string;
+
+    @Column({type:'text', nullable: true})
+    transport_type: string;
+
+    @Column({type:'text', nullable: true})
+    file_name: string;
+
     @ManyToOne(
         ()=> User,
         {cascade:true}

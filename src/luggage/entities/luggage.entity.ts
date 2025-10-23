@@ -19,6 +19,12 @@ export class Luggage {
   @Column("text")
   name: string;
 
+  @Column("boolean", { default: false })
+  is_shared: boolean;
+
+  @Column("simple-array", { nullable: true })
+  notes: string[];
+
   @OneToMany(
     () => LuggageItem,
     (luggageItem) => luggageItem.luggage,

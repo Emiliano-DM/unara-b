@@ -161,7 +161,14 @@ export class TripsService {
     return trip
   }
 
-  async addTripDocuments(files: Express.Multer.File[], tripId: string, userId:string, isPrivate?:boolean){
+  async addTripDocuments(
+    files: Express.Multer.File[],
+    tripId: string,
+    userId:string,
+    isPrivate?:boolean,
+    category?:string,
+    transportType?:string
+  ){
     const uploadResults = await Promise.all(files.map(file => this.cloudinaryProvider.uploadFile(file)))
     const trip = await this.tripRepository.findOne({where: {id:tripId}, relations: {users: true}})
     const user:User | null = await this.userRepository.findOneBy({id:userId})
@@ -184,7 +191,10 @@ export class TripsService {
         files[index].mimetype,
         uploadResult.publicId,
         trip.id,
-        isPrivate
+        isPrivate,
+        category,
+        transportType,
+        files[index].originalname
     )))
 
     return trip

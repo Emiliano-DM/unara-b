@@ -223,4 +223,80 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       data,
     });
   }
+
+  /**
+   * Emit luggage events
+   */
+  emitLuggageCreated(tripId: string, userId: string, data: any) {
+    this.emitToTrip(tripId, {
+      type: TripEventType.LUGGAGE_CREATED,
+      tripId,
+      userId,
+      timestamp: new Date(),
+      data,
+    });
+  }
+
+  emitLuggageUpdated(tripId: string, userId: string, data: any) {
+    this.emitToTrip(tripId, {
+      type: TripEventType.LUGGAGE_UPDATED,
+      tripId,
+      userId,
+      timestamp: new Date(),
+      data,
+    });
+  }
+
+  emitLuggageItemAdded(tripId: string, userId: string, data: any) {
+    this.emitToTrip(tripId, {
+      type: TripEventType.LUGGAGE_ITEM_ADDED,
+      tripId,
+      userId,
+      timestamp: new Date(),
+      data,
+    });
+  }
+
+  emitLuggageItemPacked(tripId: string, userId: string, data: any) {
+    this.emitToTrip(tripId, {
+      type: TripEventType.LUGGAGE_ITEM_PACKED,
+      tripId,
+      userId,
+      timestamp: new Date(),
+      data,
+    });
+  }
+
+  emitLuggageNoteAdded(tripId: string, userId: string, data: any) {
+    this.emitToTrip(tripId, {
+      type: TripEventType.LUGGAGE_NOTE_ADDED,
+      tripId,
+      userId,
+      timestamp: new Date(),
+      data,
+    });
+  }
+
+  /**
+   * Emit document events
+   */
+  emitDocumentUploaded(tripId: string, userId: string, data: any) {
+    this.emitToTrip(tripId, {
+      type: TripEventType.DOCUMENT_UPLOADED,
+      tripId,
+      userId,
+      timestamp: new Date(),
+      data,
+    });
+  }
+
+  emitDocumentDeleted(tripId: string, userId: string, data: any) {
+    this.emitToTrip(tripId, {
+      type: TripEventType.DOCUMENT_DELETED,
+      tripId,
+      userId,
+      timestamp: new Date(),
+      data,
+    });
+  }
 }

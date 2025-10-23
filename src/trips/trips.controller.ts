@@ -65,8 +65,15 @@ export class TripsController {
   @Post(':id/documents')
   @Auth(ValidRoles.user)
   @UseInterceptors(FilesInterceptor('files', 10))
-  addTripDocuments(@UploadedFiles(new DocumentValidation()) files:Express.Multer.File[], @Param('id') tripId:string, @GetUser() user:User, @Body('isPrivate') isPrivate:boolean){
-    return this.tripsService.addTripDocuments(files, tripId, user.id, isPrivate)
+  addTripDocuments(
+    @UploadedFiles(new DocumentValidation()) files:Express.Multer.File[],
+    @Param('id') tripId:string,
+    @GetUser() user:User,
+    @Body('isPrivate') isPrivate:boolean,
+    @Body('category') category?:string,
+    @Body('transportType') transportType?:string
+  ){
+    return this.tripsService.addTripDocuments(files, tripId, user.id, isPrivate, category, transportType)
   }
 
   @Post(':tripId/surveys')
