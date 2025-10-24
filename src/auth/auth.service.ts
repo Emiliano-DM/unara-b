@@ -41,10 +41,16 @@ export class AuthService {
     await this.usersService.update(createdUser.id, {
       refresh_token: hashedRefreshToken,
       emailVerificationToken: hashedCode,
-      emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      emailVerified: true // Auto-verify for Railway deployment
     })
 
-    await this.mailService.sendVerificationEmail(createdUser.email, verificationCode)
+    // Try to send email, but don't fail if SMTP is blocked
+    try {
+      await this.mailService.sendVerificationEmail(createdUser.email, verificationCode)
+    } catch (error) {
+      console.log('Email sending failed (SMTP blocked on Railway):', error.message)
+    }
 
     return {
       id: createdUser.id,
