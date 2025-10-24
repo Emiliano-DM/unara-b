@@ -42,7 +42,7 @@ export class AuthService {
       refresh_token: hashedRefreshToken,
       emailVerificationToken: hashedCode,
       emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      emailVerified: true // Auto-verify for Railway deployment
+      isEmailVerified: true // Auto-verify for Railway deployment
     })
 
     // Try to send email, but don't fail if SMTP is blocked

@@ -18,5 +18,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsDate()
   emailVerificationExpires?: Date | null
 
+  @IsBoolean()
+  isEmailVerified?: boolean
 
 }
