@@ -28,12 +28,17 @@ export class AuthService {
   ){}
 
   async createAccount(registerDto:RegisterDto){
+    const startTime = Date.now();
+    console.log(`[AUTH] 🚀 Registration started for: ${registerDto.email} at ${new Date().toISOString()}`);
 
+    let stepTime = Date.now();
     const hashedPassword = await bcrypt.hash(registerDto.password, 10)
+    console.log(`[AUTH] ⏱️  Password hashed in ${Date.now() - stepTime}ms`);
 
     // Extract optional fields from DTO
     const { birthDate, phone, country, profile_picture, ...requiredFields } = registerDto;
 
+    stepTime = Date.now();
     const createdUser = await this.usersService.create({
       ...requiredFields,
       password: hashedPassword,
@@ -42,26 +47,39 @@ export class AuthService {
       ...(country && { country }),
       ...(profile_picture && { profile_picture })
     })
+    console.log(`[AUTH] ⏱️  User created in database in ${Date.now() - stepTime}ms`);
+
+    stepTime = Date.now();
     const refreshToken = this.generateRefreshToken({id: createdUser.id, email: createdUser.email})
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
+    console.log(`[AUTH] ⏱️  Refresh token hashed in ${Date.now() - stepTime}ms`);
 
     // Generate 6-digit verification code
+    stepTime = Date.now();
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedCode = await bcrypt.hash(verificationCode, 10)
+    console.log(`[AUTH] ⏱️  Verification code hashed in ${Date.now() - stepTime}ms`);
 
+    stepTime = Date.now();
     await this.usersService.update(createdUser.id, {
       refresh_token: hashedRefreshToken,
       emailVerificationToken: hashedCode,
       emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
       isEmailVerified: true // Auto-verify for Railway deployment
     })
+    console.log(`[AUTH] ⏱️  User updated in database in ${Date.now() - stepTime}ms`);
 
     // Try to send email, but don't fail if SMTP is blocked
+    stepTime = Date.now();
     try {
       await this.mailService.sendVerificationEmail(createdUser.email, verificationCode)
+      console.log(`[AUTH] ⏱️  Email sent in ${Date.now() - stepTime}ms`);
     } catch (error) {
-      console.log('Email sending failed (SMTP blocked on Railway):', error.message)
+      console.log(`[AUTH] ⏱️  Email sending failed in ${Date.now() - stepTime}ms:`, error.message)
     }
+
+    const totalTime = Date.now() - startTime;
+    console.log(`[AUTH] ✅ Registration completed in ${totalTime}ms (${(totalTime / 1000).toFixed(2)}s)`);
 
     return {
       id: createdUser.id,
