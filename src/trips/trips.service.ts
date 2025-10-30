@@ -199,4 +199,55 @@ export class TripsService {
 
     return trip
   }
+
+  async addMember(tripId: string, userId: string) {
+    const trip = await this.tripRepository.findOne({
+      where: { id: tripId },
+      relations: { users: true }
+    });
+
+    if (!trip) {
+      throw new NotFoundException(`Trip with id ${tripId} not found`);
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    if (trip.users.some(u => u.id === userId)) {
+      return trip;
+    }
+
+    trip.users.push(user);
+    await this.tripRepository.save(trip);
+    return trip;
+  }
+
+  async removeMember(tripId: string, userId: string, requestingUserId: string) {
+    const trip = await this.tripRepository.findOne({
+      where: { id: tripId },
+      relations: { users: true }
+    });
+
+    if (!trip) {
+      throw new NotFoundException(`Trip with id ${tripId} not found`);
+    }
+
+    if (!trip.users.some(u => u.id === requestingUserId)) {
+      throw new UnauthorizedException('Only trip members can remove members');
+    }
+
+    const userIndex = trip.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      throw new NotFoundException(`User with id ${userId} is not in this trip`);
+    }
+
+    trip.users.splice(userIndex, 1);
+    await this.tripRepository.save(trip);
+    return trip;
+  }
 }

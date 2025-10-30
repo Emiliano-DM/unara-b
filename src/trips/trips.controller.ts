@@ -87,5 +87,5 @@ export class TripsController {
   findAllSurveys(@Param('tripId') tripId:string){
     return this.surveysService.findAll(tripId)
   }
+@Post(":id/members/:userId")  @Auth(ValidRoles.user)  addMember(    @Param("id", ParseUUIDPipe) tripId: string,    @Param("userId", ParseUUIDPipe) userId: string  ) {    return this.tripsService.addMember(tripId, userId);  }  @Delete(":id/members/:userId")  @Auth(ValidRoles.user)  removeMember(    @Param("id", ParseUUIDPipe) tripId: string,    @Param("userId", ParseUUIDPipe) userId: string,    @GetUser() user: User  ) {    return this.tripsService.removeMember(tripId, userId, user.id);  }}
 
-}
