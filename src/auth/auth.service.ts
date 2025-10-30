@@ -69,14 +69,11 @@ export class AuthService {
     })
     console.log(`[AUTH] ⏱️  User updated in database in ${Date.now() - stepTime}ms`);
 
-    // Try to send email, but don't fail if SMTP is blocked
-    stepTime = Date.now();
-    try {
-      await this.mailService.sendVerificationEmail(createdUser.email, verificationCode)
-      console.log(`[AUTH] ⏱️  Email sent in ${Date.now() - stepTime}ms`);
-    } catch (error) {
-      console.log(`[AUTH] ⏱️  Email sending failed in ${Date.now() - stepTime}ms:`, error.message)
-    }
+    // Try to send email in background - don't wait for it (Railway SMTP is blocked and times out)
+    // Fire and forget to avoid 120s timeout delay
+    this.mailService.sendVerificationEmail(createdUser.email, verificationCode)
+      .then(() => console.log('[AUTH] ✉️  Verification email sent successfully'))
+      .catch((error) => console.log('[AUTH] ⚠️  Email sending failed (SMTP blocked on Railway):', error.message));
 
     const totalTime = Date.now() - startTime;
     console.log(`[AUTH] ✅ Registration completed in ${totalTime}ms (${(totalTime / 1000).toFixed(2)}s)`);
