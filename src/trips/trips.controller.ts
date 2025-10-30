@@ -30,8 +30,8 @@ export class TripsController {
 
   @Get()
   @Auth(ValidRoles.user)
-  findAll(@Query() dto: FilterTripDto) {
-    return this.tripsService.findAll(dto);
+  findAll(@Query() dto: FilterTripDto, @GetUser() user: User) {
+    return this.tripsService.findAll(dto, user.id);
   }
 
   @Get(':id')

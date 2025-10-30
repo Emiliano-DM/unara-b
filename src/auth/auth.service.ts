@@ -30,7 +30,18 @@ export class AuthService {
   async createAccount(registerDto:RegisterDto){
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10)
-    const createdUser = await this.usersService.create({...registerDto, password: hashedPassword})
+
+    // Extract optional fields from DTO
+    const { birthDate, phone, country, profile_picture, ...requiredFields } = registerDto;
+
+    const createdUser = await this.usersService.create({
+      ...requiredFields,
+      password: hashedPassword,
+      ...(birthDate && { birthDate: new Date(birthDate) }),
+      ...(phone && { phone }),
+      ...(country && { country }),
+      ...(profile_picture && { profile_picture })
+    })
     const refreshToken = this.generateRefreshToken({id: createdUser.id, email: createdUser.email})
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
 
@@ -265,13 +276,16 @@ export class AuthService {
 
   async getPersonalAccountInfo(user:User){
     return {
-      id: user.id, 
-      email: user.email, 
-      username: user.username, 
-      fullname: user.fullname, 
-      profile_picture: user.profile_picture, 
-      isEmailVerified: user.isEmailVerified, 
-      roles: user.roles, 
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      fullname: user.fullname,
+      profile_picture: user.profile_picture,
+      birthDate: user.birthDate,
+      phone: user.phone,
+      country: user.country,
+      isEmailVerified: user.isEmailVerified,
+      roles: user.roles,
       createdAt: user.createdAt
     }
   }

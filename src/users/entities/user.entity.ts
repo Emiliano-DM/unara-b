@@ -59,6 +59,15 @@ export class User {
   @Column({ type: "text", nullable: true })
   profile_picture?: string;
 
+  @Column({ type: "date", nullable: true })
+  birthDate?: Date;
+
+  @Column({ type: "varchar", length: 20, nullable: true })
+  phone?: string;
+
+  @Column({ type: "varchar", length: 100, nullable: true })
+  country?: string;
+
   @OneToMany(() => Luggage, (luggage) => luggage.user)
   luggage: Luggage[];
 

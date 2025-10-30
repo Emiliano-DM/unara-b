@@ -44,12 +44,12 @@ export class TripsService {
       return trip;
   }
 
-  async findAll(dto: FilterTripDto) {
-      const { 
-        limit = 10, 
+  async findAll(dto: FilterTripDto, userId: string) {
+      const {
+        limit = 10,
         offset = 0,
         name,
-        description, 
+        description,
         destination,
         startDate,
         endDate
@@ -57,7 +57,8 @@ export class TripsService {
 
       const query = this.tripRepository
                         .createQueryBuilder('trip')
-                        .leftJoinAndSelect('trip.users', 'user');
+                        .leftJoinAndSelect('trip.users', 'user')
+                        .where('user.id = :userId', { userId });
 
       if (name) query.andWhere('trip.name ILIKE :name', { name: `%${name}%` });
       if (description) query.andWhere('trip.description ILIKE :description', { description: `%${description}%` });
